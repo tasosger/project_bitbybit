@@ -78,7 +78,7 @@ public class DockerImage {
                 .withImageNameFilter(imageName)
                 .exec();
 
-        if (images.isEmpty()) {
+        if (images.isEmpty())  {
             pullImage(imageName);
             System.out.println("Image was not already pulled. Image pulled successfully");
         }

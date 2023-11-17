@@ -49,7 +49,7 @@ public class MonitorThread extends Thread {
         shouldRun = false;
         interrupt();
     }
-    public void printFinalMetrics() {
+    public void printFinalMetrics()  {
         //System.out.println("FINAL METRICS "+ this.containerId + " " );
         //System.out.println("Metrics: " + containerMetrics);
     }

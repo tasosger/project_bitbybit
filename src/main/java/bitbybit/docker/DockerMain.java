@@ -9,7 +9,7 @@ import com.github.dockerjava.api.model.Container;
 import java.util.List;
 import java.util.Scanner;
 
-public class DockerMain {
+public class DockerMain  {
     public static DockerImage dockerImage;
     public static DockerInstance dockerInstance;
     public static void main(String[] args) {

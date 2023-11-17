@@ -115,7 +115,7 @@ public class DockerInstance {
             dockerLock.unlock();
         }
     }
-    public Container getContainer(String containerid) {
+    public Container getContainer(String  containerid) {
         try {
             List<Container> containers = dockerClient.listContainersCmd().exec();
             for (Container container : containers) {
