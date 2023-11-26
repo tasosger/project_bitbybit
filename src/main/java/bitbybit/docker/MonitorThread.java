@@ -1,63 +1,70 @@
 package bitbybit.docker;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.Statistics;
 
 import java.io.Closeable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MonitorThread extends Thread {
-
+    private static int measurement = 0;
     private final DockerClient dockerClient;
-    private final String containerId;
+    private String containerid;
+    private final DockerInstance dockerInstance;
     private volatile boolean shouldRun;
+    private static final ReentrantLock dockerLock = new ReentrantLock();
+    private boolean running;
     private final long startTime;
+    public static final ArrayList<ContainerMetrics> metricsList = new ArrayList<>();
 
     // Map to store container metrics
     private final Map<String, Object> containerMetrics;
 
-    public MonitorThread(DockerClient dockerClient, String containerId) {
+    public MonitorThread(DockerClient dockerClient, DockerInstance dockerInstance, String containerid) {
         this.dockerClient = dockerClient;
-        this.containerId = containerId;
         this.containerMetrics = new HashMap<>();
         this.shouldRun = true;
+        this.dockerInstance =dockerInstance;
         this.startTime = System.currentTimeMillis();
+        this.containerid = containerid;
     }
 
     @Override
     public void run() {
         try {
-            // Run the monitoring loop every 5 seconds
-            while (shouldRun && (System.currentTimeMillis() - startTime) <= 30000) { // Run for 30 seconds
-                collectAndPersistMetrics();
-                System.out.println("Thread is running");
-                Thread.sleep(15000); // Sleep for 5 seconds
+            while (shouldRun && (System.currentTimeMillis() - startTime) <= 10000) {
+                dockerLock.lock();
+                measurement++;
+                dockerLock.unlock();
+                collectAndPersistMetrics(measurement);
+                Thread.sleep(5000);
+                if(!isContainerRunning(containerid)) {
+                    shouldRun = false;
+                }
             }
         } catch (InterruptedException e) {
-            // Handle interruption (e.g., thread interrupted while sleeping)
+            System.err.println("Monitoring interrupted: " +containerid);
             e.printStackTrace();
         } catch (Exception e) {
-            e.printStackTrace();
+
         }
     }
-    public void stopMonitoring() {
-        shouldRun = false;
-        interrupt();
-    }
-    public void printFinalMetrics()  {
-        //System.out.println("FINAL METRICS "+ this.containerId + " " );
-        //System.out.println("Metrics: " + containerMetrics);
-    }
 
-    private void collectAndPersistMetrics() {
+
+    private void collectAndPersistMetrics(int m) {
         try {
-            // Create a StatsCmd to monitor container statistics
-            dockerClient.statsCmd(containerId).exec(new StatsCallback());
+            dockerClient.statsCmd(containerid).exec(new StatsCallback(measurement));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -65,72 +72,152 @@ public class MonitorThread extends Thread {
 
 
     private class StatsCallback implements ResultCallback<Statistics> {
+        private int measurement;
+        public StatsCallback(int m){
+            measurement = m;
+        }
         @Override
-        public void onStart(Closeable closeable) {
-            //System.out.println("WE ARE IN");
+        public void onStart(Closeable closeable) {;
         }
 
         @Override
         public void onNext(Statistics stats) {
-            // Process container statistics
-
-            // Example: Get memory usage
-            long memoryUsage = stats.getMemoryStats().getUsage();
-
-            // Example: Get CPU usage
-            double cpuUsage = stats.getCpuStats().getCpuUsage().getTotalUsage();
-
-            // Example: Get network stats
-            long networkRx = stats.getNetworks().get("eth0").getRxBytes();
-            long networkTx = stats.getNetworks().get("eth0").getTxBytes();
-
-            // Example: Get timestamp of the statistics update
-            //Date timestamp = new Date(stats.getRead());
-
-            // Store the metrics in the map
-            containerMetrics.put("MemoryUsage", memoryUsage);
-            containerMetrics.put("CpuUsage", cpuUsage);
-            containerMetrics.put("NetworkRx", networkRx);
-            containerMetrics.put("NetworkTx", networkTx);
-            //containerMetrics.put("Timestamp", timestamp);
-            // System.out.println("code entered");
-            // Print metrics to console
-            printMetrics(containerMetrics);
-
-            // Persist metrics
-            persistMetrics(memoryUsage, cpuUsage);
+            try {
+                long memoryUsage = stats.getMemoryStats().getUsage();
+                double cpuUsage = stats.getCpuStats().getCpuUsage().getTotalUsage();
+                long networkRx = stats.getNetworks().get("eth0").getRxBytes();
+                long networkTx = stats.getNetworks().get("eth0").getTxBytes();
+                Date timestamp = parseDate(stats.getRead());
+                containerMetrics.put("MemoryUsage", memoryUsage);
+                containerMetrics.put("CpuUsage", cpuUsage);
+                containerMetrics.put("NetworkRx", networkRx);
+                containerMetrics.put("NetworkTx", networkTx);
+                containerMetrics.put("Timestamp", timestamp);
+                containerMetrics.put("ContainerID", containerid);
+                containerMetrics.put("ImageName", dockerInstance.getContainer(containerid).getImage());
+                containerMetrics.put("Measurement", measurement);
+                persistMetrics(memoryUsage, cpuUsage, timestamp, containerid, dockerInstance.getContainer(containerid).getImage(), measurement);
+            } catch (NullPointerException e){
+                System.err.println("Error getting metrics " + e.getMessage());
+            } catch (Exception e){
+                System.err.println("Error during metrics collection "+e.getMessage());
+            }
         }
 
         @Override
         public void onError(Throwable throwable) {
-            //System.out.println("Code is wrong" + throwable.getMessage());
-            throwable.printStackTrace();
+            System.err.println("Error during monitoring "+throwable.getMessage());
         }
 
         @Override
         public void onComplete() {
-            System.out.println("Monitoring complete. Adios");
         }
 
         @Override
         public void close() {
-            System.out.println("Closing...");
         }
     }
 
-    private void printMetrics(Map<String, Object> metrics) {
-        // Print metrics to console
-       // System.out.println("Metrics: " + metrics);
-    }
     public Map<String, Object> getContainerMetrics() {
         return containerMetrics;
     }
 
 
-    private void persistMetrics(long memoryUsage, double cpuUsage) {
-        // Add logic to persist metrics to a storage system (e.g., database)
-        // This could involve using an ORM, JDBC, or any other storage mechanism
-        // For demonstration purposes, print to console
-        //System.out.println("Persisting Metrics: MemoryUsage=" + memoryUsage + ", CpuUsage=" + cpuUsage);
+    private void persistMetrics(long memoryUsage, double cpuUsage, Date timestamp, String containerid, String imageName, int measurement) {
+        dockerLock.lock();
+        ContainerMetrics containerMetrics = new ContainerMetrics(memoryUsage, cpuUsage, timestamp, containerid, imageName,measurement);
+        metricsList.add(containerMetrics);
+        dockerLock.unlock();
+    }
+    private boolean isContainerRunning(String containerId) {
+        try {
+            InspectContainerResponse inspectionResponse = dockerClient.inspectContainerCmd(containerId).exec();
+            InspectContainerResponse.ContainerState state = inspectionResponse.getState();
+            return state != null && state.getRunning();
+        } catch (NotFoundException e) {
+            System.err.println("Container not found: " + containerId); // Container not found, consider it not running
+        } catch (Exception e) {
+            System.err.println("An error has occurred "+e.getMessage());
+        }
+        return false;
+    }
+    public static class ContainerMetrics {
+        private final long memoryUsage;
+        private final String containerId;
+        private final double cpuUsage;
+        private final Date  timestamp;
+        private final String imageName;
+        private final int measurement;
+
+        public ContainerMetrics(long memoryUsage, double cpuUsage, Date timestamp, String containerId, String imageName,int measurement) {
+            this.memoryUsage = memoryUsage;
+            this.cpuUsage = cpuUsage;
+            this.timestamp = timestamp;
+            this.containerId = containerId;
+            this.imageName = imageName;
+            this.measurement=measurement;
+        }
+
+        public long getMemoryUsage() {
+            try {
+                return memoryUsage;
+            } catch (Exception e) {
+              System.err.println("Can not return Memory");
+            }
+            return -1;
+        }
+        public double getCPUusage() {
+            try {
+                return cpuUsage;
+            } catch (Exception e) {
+                System.err.println("Can not return CPU usage");
+            }
+            return -1;
+        }
+        public String getContainerID() {
+            try {
+                return containerId;
+            } catch (Exception e) {
+                System.err.println("Can not return container ID");
+            }
+            return null;
+        }
+        public int getMeasurement(){
+            try {
+                return measurement;
+            } catch (Exception e) {
+                System.err.println("Can not return metrics measurement");
+            }
+            return -1;
+        }
+        public String getimageName() {
+            try {
+                return imageName;
+            } catch (Exception e) {
+                System.err.println("Can not return container ID");
+            }
+            return null;
+        }
+        public Date getTimestamp() {
+            try {
+                return timestamp;
+            } catch (Exception e) {
+                System.err.println("Can not return timestamp");
+            }
+            return null;
+        }
+        public String toString() {
+            return (measurement+" "+containerId + " " + memoryUsage +" "+ cpuUsage + " " + imageName +" "+" " + timestamp);
+        }
+    }
+    private Date parseDate(String dateString) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSSZ");
+         System.out.println(dateString);
+        try {
+            return dateFormat.parse(dateString);
+        } catch (ParseException e) {
+            System.out.println("Error during parsing "+e.getMessage());
+            return null;
+        }
     }
 }
