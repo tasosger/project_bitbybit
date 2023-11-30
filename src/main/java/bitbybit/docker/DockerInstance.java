@@ -19,20 +19,16 @@ import com.github.dockerjava.api.model.Network;
 import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
 
-
 public class DockerInstance {
     private final DockerClient dockerClient;
     private static final ReentrantLock dockerLock = new ReentrantLock();
     public static List<Container> containers;
     public static List<ThreadPairs> executorthreads = new LinkedList<ThreadPairs>();
     public static List<ThreadPairs> monitorthreads = new LinkedList<ThreadPairs>();
-
     public DockerInstance(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
         this.containers = listContainers();
     }
-
-
     public String createContainer(String containerName, String image)  {
         dockerLock.lock();
         try {
@@ -56,7 +52,6 @@ public class DockerInstance {
         }
         return null;
     }
-
     public void startContainer(String containerId)  {
        try {
            if (isContainerRunning(containerId)) {
@@ -64,7 +59,7 @@ public class DockerInstance {
             }
             dockerClient.startContainerCmd(containerId).exec();
             System.out.println("Container Started successfully: "+ containerId);
-           // getMonThread(containerId).start();
+           //getMonThread(containerId).start();
         }catch (NotFoundException e) {
            System.err.println("Container not found with ID: " + containerId + " " + e.getMessage());
        } catch (ContainerAlreadyRunningException e){
@@ -74,7 +69,6 @@ public class DockerInstance {
             e.printStackTrace();
         }
     }
-
     public String executeCommandInContainer(String containerId, String[] command)  {
         try {
             if (!isContainerRunning(containerId)) {
@@ -137,6 +131,7 @@ public class DockerInstance {
             }
             StopContainerCmd stopContainerCmd = dockerClient.stopContainerCmd(containerId);
             stopContainerCmd.exec();
+           // getMonThread(containerId).interrupt();
             System.out.println("Container stopped successfully: " + containerId);
         }catch(ContainerNotRunningException e) {
             System.err.println("Container is not running"+ " " + e.getMessage());

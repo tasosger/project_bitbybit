@@ -43,7 +43,7 @@ public class MonitorThread extends Thread {
     @Override
     public void run() {
         try {
-            while (shouldRun && (System.currentTimeMillis() - startTime) <= 10000) {
+            while (shouldRun && (System.currentTimeMillis() - startTime) <= 30000) {
                 dockerLock.lock();
                 measurement++;
                 dockerLock.unlock();
@@ -87,7 +87,7 @@ public class MonitorThread extends Thread {
                 double cpuUsage = stats.getCpuStats().getCpuUsage().getTotalUsage();
                 long networkRx = stats.getNetworks().get("eth0").getRxBytes();
                 long networkTx = stats.getNetworks().get("eth0").getTxBytes();
-                Date timestamp = parseDate(stats.getRead());
+                String timestamp = stats.getRead();
                 containerMetrics.put("MemoryUsage", memoryUsage);
                 containerMetrics.put("CpuUsage", cpuUsage);
                 containerMetrics.put("NetworkRx", networkRx);
@@ -123,7 +123,7 @@ public class MonitorThread extends Thread {
     }
 
 
-    private void persistMetrics(long memoryUsage, double cpuUsage, Date timestamp, String containerid, String imageName, int measurement) {
+    private void persistMetrics(long memoryUsage, double cpuUsage, String timestamp, String containerid, String imageName, int measurement) {
         dockerLock.lock();
         ContainerMetrics containerMetrics = new ContainerMetrics(memoryUsage, cpuUsage, timestamp, containerid, imageName,measurement);
         metricsList.add(containerMetrics);
@@ -145,11 +145,11 @@ public class MonitorThread extends Thread {
         private final long memoryUsage;
         private final String containerId;
         private final double cpuUsage;
-        private final Date  timestamp;
+        private final String  timestamp;
         private final String imageName;
         private final int measurement;
 
-        public ContainerMetrics(long memoryUsage, double cpuUsage, Date timestamp, String containerId, String imageName,int measurement) {
+        public ContainerMetrics(long memoryUsage, double cpuUsage, String timestamp, String containerId, String imageName,int measurement) {
             this.memoryUsage = memoryUsage;
             this.cpuUsage = cpuUsage;
             this.timestamp = timestamp;
@@ -198,7 +198,7 @@ public class MonitorThread extends Thread {
             }
             return null;
         }
-        public Date getTimestamp() {
+        public String getTimestamp() {
             try {
                 return timestamp;
             } catch (Exception e) {
@@ -210,14 +210,5 @@ public class MonitorThread extends Thread {
             return (measurement+" "+containerId + " " + memoryUsage +" "+ cpuUsage + " " + imageName +" "+" " + timestamp);
         }
     }
-    private Date parseDate(String dateString) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSSZ");
-         System.out.println(dateString);
-        try {
-            return dateFormat.parse(dateString);
-        } catch (ParseException e) {
-            System.out.println("Error during parsing "+e.getMessage());
-            return null;
-        }
-    }
+
 }

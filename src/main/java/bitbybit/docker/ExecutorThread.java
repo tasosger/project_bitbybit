@@ -16,8 +16,6 @@ public class ExecutorThread extends Thread {
 
 
     public ExecutorThread(DockerInstance dockerInstance) {
-
-
         this.taskQueue = new LinkedList<>();
         this.dockerInstance = dockerInstance;
         this.shouldrun = true;
