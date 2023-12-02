@@ -1,10 +1,10 @@
 package bitbybit.docker;
 
-        import com.github.dockerjava.api.DockerClient;
-        import com.github.dockerjava.api.model.Container;
-        import com.github.dockerjava.core.DockerClientBuilder;
-        import com.github.dockerjava.core.DockerClientConfig;
-        import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
 
 public class ExecutorThreadNew implements Runnable {
     private volatile boolean running = true;
