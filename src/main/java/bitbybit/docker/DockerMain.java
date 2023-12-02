@@ -11,12 +11,10 @@ import java.util.List;
 
 public class DockerMain {
     public static DockerImage dim;
-    public static DockerInstance di;
     public static DockerClient dockerClient;
 
     public static void main(String[] args) {
         dockerClient = initializeDockerClient();
-        di = new DockerInstance(dockerClient);
         dim = new DockerImage();
 
         //try {
@@ -24,46 +22,35 @@ public class DockerMain {
         //} catch (InterruptedException e){
 
         //}
-           String containerid = di.createContainer("mycontainer","nginx:latest");
-           di.startContainer(containerid);
-           dim.displayImageResponce(dim.getImageIdByName("nginx:latest"));
+           String containerid = DockerInstance.createContainer("mycontainer","nginx:latest");
+           DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid,5000));
+           //dim.displayImageResponce(dim.getImageIdByName("nginx:latest"));
+           //String logs = DockerInstance.getContainerLogs(containerid);
+          //System.out.println(logs);//container tests
 
-          try {
-              Thread.sleep(10000);
-          } catch (InterruptedException e){
-
-
-          }        //container tests
-        try {
-            MonitorThread m = new MonitorThread(dockerClient,di,containerid);
-            m.start();
-            try {
-                m.join();
-            } catch (InterruptedException e){
-
-            }
-            for(MonitorThread.ContainerMetrics c: MonitorThread.metricsList){
-                System.out.println(c.toString());
-            }
-          List<Container> cont = di.listrunningContainer();
-            for(Container c:cont){
-                System.out.println(c.getId());
-            }
-
-
-            di.listpausedContainer();
-            di.displaySubnets();
-            di.displayDiskVolumes();
+          //List<Container> cont = DockerInstance.listrunningContainer();
+            //for(Container c:cont){
+              //  System.out.println(c.getId());
+            //}
 
 
 // Wait for some time or perform other tasks
 
 // Stop the executor thread after some time or when done with container tasks
-            //try {
-            //  executorThread.join();
-            //}  catch (InterruptedException e) {
-            //    e.printStackTrace();
-            //}
+            try {
+                System.out.println("Waiting");
+               Thread.sleep(15000);
+               System.out.println("Stopped Waiting");
+            }  catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        DockerInstance.getExecThread(containerid).stopthread();
+        DockerInstance.getMonThread(containerid).interrupt();
+        System.out.println(MonitorThread.metricsList.size());
+            for(MonitorThread.ContainerMetrics c: MonitorThread.metricsList){
+                System.out.println("metrics "+c);
+            }
+
             //executorThread.stopExecution();
             //dockerInstance.startContainer(containerId);
             //System.out.println("Container started.");
@@ -100,9 +87,7 @@ public class DockerMain {
 
             }*/
 
-        } catch (DockerException e) {
-            e.printStackTrace();
-        }
+
 
 
         //dockerInstance.close();

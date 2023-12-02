@@ -7,6 +7,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.Statistics;
+import com.github.dockerjava.core.DockerClientBuilder;
 
 import java.io.Closeable;
 import java.text.ParseException;
@@ -19,23 +20,18 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class MonitorThread extends Thread {
     private static int measurement = 0;
-    private final DockerClient dockerClient;
+    private final DockerClient dockerClient=initializeDockerClient();
     private String containerid;
-    private final DockerInstance dockerInstance;
     private volatile boolean shouldRun;
-    private static final ReentrantLock dockerLock = new ReentrantLock();
+    protected static final ReentrantLock dockerLock = new ReentrantLock();
     private boolean running;
     private final long startTime;
-    public static final ArrayList<ContainerMetrics> metricsList = new ArrayList<>();
-
-    // Map to store container metrics
+    public static  ArrayList<ContainerMetrics> metricsList = new ArrayList<>();
     private final Map<String, Object> containerMetrics;
 
-    public MonitorThread(DockerClient dockerClient, DockerInstance dockerInstance, String containerid) {
-        this.dockerClient = dockerClient;
+    public MonitorThread(String containerid) {
         this.containerMetrics = new HashMap<>();
         this.shouldRun = true;
-        this.dockerInstance =dockerInstance;
         this.startTime = System.currentTimeMillis();
         this.containerid = containerid;
     }
@@ -43,16 +39,15 @@ public class MonitorThread extends Thread {
     @Override
     public void run() {
         try {
-            while (shouldRun && (System.currentTimeMillis() - startTime) <= 30000) {
-                dockerLock.lock();
-                measurement++;
-                dockerLock.unlock();
-                collectAndPersistMetrics(measurement);
-                Thread.sleep(5000);
-                if(!isContainerRunning(containerid)) {
-                    shouldRun = false;
+            while (shouldRun) {
+                if (DockerInstance.isContainerRunning(containerid)) {
+                    dockerLock.lock();
+                    collectAndPersistMetrics();
+                    dockerLock.unlock();
+                    Thread.sleep(5000);
                 }
             }
+
         } catch (InterruptedException e) {
             System.err.println("Monitoring interrupted: " +containerid);
             e.printStackTrace();
@@ -60,11 +55,17 @@ public class MonitorThread extends Thread {
 
         }
     }
+    public static void increaseM(){
+        measurement++;
+    }
+    public static int getMeasurement(){
+        return measurement;
+    }
 
 
-    private void collectAndPersistMetrics(int m) {
+    private void collectAndPersistMetrics() {
         try {
-            dockerClient.statsCmd(containerid).exec(new StatsCallback(measurement));
+            dockerClient.statsCmd(containerid).exec(new StatsCallback());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -73,9 +74,9 @@ public class MonitorThread extends Thread {
 
     private class StatsCallback implements ResultCallback<Statistics> {
         private int measurement;
-        public StatsCallback(int m){
-            measurement = m;
-        }
+        //public StatsCallback(int m){
+           // measurement = m;
+        //}
         @Override
         public void onStart(Closeable closeable) {;
         }
@@ -83,6 +84,8 @@ public class MonitorThread extends Thread {
         @Override
         public void onNext(Statistics stats) {
             try {
+                dockerLock.lock();
+                MonitorThread.increaseM();
                 long memoryUsage = stats.getMemoryStats().getUsage();
                 double cpuUsage = stats.getCpuStats().getCpuUsage().getTotalUsage();
                 long networkRx = stats.getNetworks().get("eth0").getRxBytes();
@@ -94,11 +97,13 @@ public class MonitorThread extends Thread {
                 containerMetrics.put("NetworkTx", networkTx);
                 containerMetrics.put("Timestamp", timestamp);
                 containerMetrics.put("ContainerID", containerid);
-                containerMetrics.put("ImageName", dockerInstance.getContainer(containerid).getImage());
-                containerMetrics.put("Measurement", measurement);
-                persistMetrics(memoryUsage, cpuUsage, timestamp, containerid, dockerInstance.getContainer(containerid).getImage(), measurement);
+                containerMetrics.put("ImageName", DockerInstance.getContainer(containerid).getImage());
+                containerMetrics.put("Measurement", MonitorThread.getMeasurement());
+                persistMetrics(memoryUsage, cpuUsage, timestamp, containerid, DockerInstance.getContainer(containerid).getImage(), MonitorThread.getMeasurement());
+                dockerLock.unlock();
             } catch (NullPointerException e){
                 System.err.println("Error getting metrics " + e.getMessage());
+                e.printStackTrace();
             } catch (Exception e){
                 System.err.println("Error during metrics collection "+e.getMessage());
             }
@@ -210,5 +215,9 @@ public class MonitorThread extends Thread {
             return (measurement+" "+containerId + " " + memoryUsage +" "+ cpuUsage + " " + imageName +" "+" " + timestamp);
         }
     }
-
+    private static DockerClient initializeDockerClient() {
+        return DockerClientBuilder.getInstance
+                        ("tcp://localhost:2375")
+                .build();
+    }
 }

@@ -100,7 +100,6 @@ public class DockerImage {
     public void removeImage(String imageID)  {
         try {
             dockerClient.removeImageCmd(imageID).exec();
-            this.close();
             System.out.println("Image removed: " + imageID);
             images = listImages();
         } catch (NotFoundException e) {
