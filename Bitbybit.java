@@ -7,6 +7,7 @@ public class Bitbybit{
 	 	System.out.println("ligi sovarotita parakalo...");
     	System.out.println("OMG EPITELOUS TO KATALAVA");
 	 	System.out.println("test by mary");
+                System.out.println("test by eva");
 	}
 	public static int result() {
 		return 2;
