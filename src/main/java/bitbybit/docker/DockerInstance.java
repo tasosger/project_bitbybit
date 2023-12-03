@@ -33,6 +33,15 @@ public class DockerInstance {
             getMonThread(container.getId()).start();
         }
     }
+    public static void closeThreads(){
+        for(ThreadPairs p: monitorthreads){
+            p.getThread().interrupt();
+        }
+        for(ThreadPairs p: executorthreads){
+            p.getThread().interrupt();
+        }
+
+    }
     public static String createContainer(String containerName, String image)  {
         dockerLock.lock();
         try {
@@ -137,7 +146,6 @@ public class DockerInstance {
             }
             StopContainerCmd stopContainerCmd = dockerClient.stopContainerCmd(containerId);
             stopContainerCmd.exec();
-           // getMonThread(containerId).interrupt();
             System.out.println("Container stopped successfully: " + containerId);
         }catch(ContainerNotRunningException e) {
             System.err.println("Container is not running"+ " " + e.getMessage());
@@ -241,9 +249,14 @@ public class DockerInstance {
                 System.err.println("Container with ID " + containerId + " does not exist.");
                 return;
             }
-            stopContainer(containerId);
+            if (isContainerRunning(containerId)) {
+                stopContainer(containerId);
+            }
+            getMonThread(containerId).interrupt();
+            System.out.println("Removing container");
             RemoveContainerCmd removeContainerCmd = dockerClient.removeContainerCmd(containerId);
             removeContainerCmd.exec();
+            getExecThread(containerId).stopthread();
             System.out.println("Container with ID " + containerId + " removed successfully.");
             containers = listContainers();
         } catch (Exception e) {

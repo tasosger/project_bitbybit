@@ -23,7 +23,12 @@ public class DockerMain {
 
         //}
            String containerid = DockerInstance.createContainer("mycontainer","nginx:latest");
-           DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid,5000));
+           String containerid2 = DockerInstance.createContainer("mycontainer", "nginx:latest");
+           DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid,15000));
+           DockerInstance.getExecThread(containerid2).addTask(new ExecutorThread.StartContainerTask(containerid2,15000));
+           DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid,-1));
+           DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.PauseContainerTask(containerid,2000));
+        DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StopContainerTask(containerid));
            //dim.displayImageResponce(dim.getImageIdByName("nginx:latest"));
            //String logs = DockerInstance.getContainerLogs(containerid);
           //System.out.println(logs);//container tests
@@ -44,13 +49,14 @@ public class DockerMain {
             }  catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        DockerInstance.getExecThread(containerid).stopthread();
-        DockerInstance.getMonThread(containerid).interrupt();
-        System.out.println(MonitorThread.metricsList.size());
             for(MonitorThread.ContainerMetrics c: MonitorThread.metricsList){
                 System.out.println("metrics "+c);
             }
 
+            DockerInstance.getExecThread(containerid).stopthread();
+            DockerInstance.getMonThread(containerid).stopThread();
+            //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.RemoveContainerTask(containerid));
+            //DockerInstance.getMonThread(containerid).interrupt();
             //executorThread.stopExecution();
             //dockerInstance.startContainer(containerId);
             //System.out.println("Container started.");

@@ -54,6 +54,7 @@ public class MonitorThread extends Thread {
         } catch (Exception e) {
 
         }
+        System.out.println("Stopping mon");
     }
     public static void increaseM(){
         measurement++;
@@ -69,6 +70,9 @@ public class MonitorThread extends Thread {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+    public void stopThread(){
+        shouldRun = false;
     }
 
 
@@ -102,8 +106,9 @@ public class MonitorThread extends Thread {
                 persistMetrics(memoryUsage, cpuUsage, timestamp, containerid, DockerInstance.getContainer(containerid).getImage(), MonitorThread.getMeasurement());
                 dockerLock.unlock();
             } catch (NullPointerException e){
-                System.err.println("Error getting metrics " + e.getMessage());
-                e.printStackTrace();
+                if(isContainerRunning(containerid)) {
+                    System.err.println("Error getting metrics " + e.getMessage());
+                }
             } catch (Exception e){
                 System.err.println("Error during metrics collection "+e.getMessage());
             }

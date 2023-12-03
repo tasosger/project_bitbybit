@@ -29,8 +29,8 @@ public class ExecutorThread extends Thread {
 
     @Override
     public void run() {
-      while(shouldrun || !taskQueue.isEmpty()) {
-            while (!taskQueue.isEmpty()) {
+      while(shouldrun) {
+            while (!taskQueue.isEmpty() && shouldrun) {
                 ContainerTask task = taskQueue.poll();
                 if (task != null) {
                     if (task instanceof StartContainerTask){
@@ -63,6 +63,7 @@ public class ExecutorThread extends Thread {
             }
 
         }
+        System.out.println("Stopping");
     }
 
 
@@ -230,6 +231,7 @@ public class ExecutorThread extends Thread {
         @Override
         public void execute() {
             try {
+                System.out.println("Removing cont");
                 DockerInstance.removeContainer(containerid);
             } catch (Exception e) {
                 System.err.println("Error while removing container");
