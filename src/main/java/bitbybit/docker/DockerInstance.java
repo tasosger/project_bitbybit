@@ -52,16 +52,16 @@ public class DockerInstance {
             System.out.println("Container created successfully: " + container.getId());
             executorthreads.add(new ThreadPairs(container.getId(), new ExecutorThread()));
             monitorthreads.add(new ThreadPairs(container.getId(), new MonitorThread(container.getId())));
-            getExecThread(container.getId()).start();
-            getMonThread(container.getId()).start();
+            Objects.requireNonNull(getExecThread(container.getId())).start();
+            Objects.requireNonNull(getMonThread(container.getId())).start();
+            DatabaseHandler.add_container(container.getId(), containerName , image);
             return container.getId();
         } catch (ConflictException e) {
-            System.err.println("Conatiner name already in use. Generating new name");
+            System.err.println("Container name already in use. Generating new name");
             String uniqueContainerName = generateUniqueContainerName(containerName);
             return createContainer(uniqueContainerName, image);
         } catch (Exception e) {
-          System.err.println("Cannot create container"+ " " + e.getMessage());
-          e.printStackTrace();
+            System.err.println("Cannot create container"+ " " + e.getMessage());
         } finally {
            dockerLock.unlock();
         }
@@ -74,7 +74,6 @@ public class DockerInstance {
             }
             dockerClient.startContainerCmd(containerId).exec();
             System.out.println("Container Started successfully: "+ containerId);
-           //getMonThread(containerId).start();
         }catch (NotFoundException e) {
            System.err.println("Container not found with ID: " + containerId + " " + e.getMessage());
        } catch (ContainerAlreadyRunningException e){
@@ -200,7 +199,6 @@ public class DockerInstance {
         }
         return null;
     }
-
     public static void pauseContainer(String containerId)  {
         try {
             if (!isContainerRunning(containerId)) {
@@ -263,7 +261,6 @@ public class DockerInstance {
             System.err.println("Error removing container with ID: " + containerId+ " " + e.getMessage());
         }
     }
-
     public static Container getContainer(String containerId) {
         try {
             List<Container> containers = dockerClient.listContainersCmd().exec();
@@ -395,7 +392,7 @@ public class DockerInstance {
         System.err.println("Error displaying disk volumes: " + e.getMessage());
     }
     }
-    private static  String getVolumeMounts(String containerId) {
+    public static  String getVolumeMounts(String containerId) {
         try {
             List<Container> containers = dockerClient.listContainersCmd().exec();
 
@@ -408,7 +405,7 @@ public class DockerInstance {
             System.out.println("Error getting volume mounts for container " + containerId+" "+e.getMessage());
         }
 
-        return List.of().toString();
+        return null;
     }
 
     public static void displaySubnets() {

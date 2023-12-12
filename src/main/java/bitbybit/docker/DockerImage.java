@@ -18,10 +18,7 @@ import java.io.IOException;
 public class DockerImage {
     private static final DockerClient dockerClient= initializeDockerClient();
     public static List<Image> images;
-    public DockerImage() {
-       images = listImages();
-    }
-    private void pullImage(String imageName) {
+    private static void pullImage(String imageName) {
         try {
             dockerClient.pullImageCmd(imageName)
                     .exec(new PullImageResultCallback())
@@ -36,7 +33,7 @@ public class DockerImage {
             System.err.println("Image can not be pulled"+ " " + e.getMessage());
         }
     }
-    public void pullImage(String imageName, String tag) {
+    public static void pullImage(String imageName, String tag) {
         try {
             dockerClient.pullImageCmd(imageName)
                     .withTag(tag)
@@ -52,7 +49,7 @@ public class DockerImage {
             System.err.println("Image can not be pulled"+ " " + e.getMessage());
         }
     }
-    public void pullImageIfNotExists(String imageName) {
+    public static void pullImageIfNotExists(String imageName) {
         try{
         List<Image> images = dockerClient.listImagesCmd()
                 .withImageNameFilter(imageName)
@@ -97,7 +94,7 @@ public class DockerImage {
         }
         return null;
     }
-    public void removeImage(String imageID)  {
+    public static void removeImage(String imageID)  {
         try {
             dockerClient.removeImageCmd(imageID).exec();
             System.out.println("Image removed: " + imageID);
@@ -108,7 +105,7 @@ public class DockerImage {
             System.err.println("Cannot remove image"+ " " + e.getMessage());
         }
     }
-    public List<Image> listImages() {
+    public static List<Image> listImages() {
         try {
             ListImagesCmd listImagesCmd = dockerClient.listImagesCmd();
             return listImagesCmd.exec();
@@ -118,7 +115,7 @@ public class DockerImage {
         return null;
     }
 
-    public List<SearchItem> searchImages(String name) {
+    public static List<SearchItem> searchImages(String name) {
         try {
             return dockerClient.searchImagesCmd(name).exec();
         } catch (NotFoundException e) {
@@ -129,7 +126,7 @@ public class DockerImage {
             return null;
     }
 
-    public InspectImageResponse inspectImage(String imageID) {
+    public static InspectImageResponse inspectImage(String imageID) {
         try {
             return dockerClient.inspectImageCmd(imageID).exec();
         } catch (NotFoundException e) {
@@ -139,7 +136,7 @@ public class DockerImage {
         }
         return null;
     }
-    public void displayImageResponce(String id){
+    public static void displayImageResponce(String id){
         InspectImageResponse resp = inspectImage(id);
         if (resp != null) {
             System.out.println("Image ID: " + resp.getId());

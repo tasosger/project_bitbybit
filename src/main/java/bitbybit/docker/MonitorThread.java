@@ -9,13 +9,13 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.Statistics;
 import com.github.dockerjava.core.DockerClientBuilder;
 
-import java.io.Closeable;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class MonitorThread extends Thread {
@@ -54,7 +54,6 @@ public class MonitorThread extends Thread {
         } catch (Exception e) {
 
         }
-        System.out.println("Stopping mon");
     }
     public static void increaseM(){
         measurement++;
@@ -68,7 +67,7 @@ public class MonitorThread extends Thread {
         try {
             dockerClient.statsCmd(containerid).exec(new StatsCallback());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error during metrics collection"+ e.getMessage());
         }
     }
     public void stopThread(){
@@ -84,7 +83,6 @@ public class MonitorThread extends Thread {
         @Override
         public void onStart(Closeable closeable) {;
         }
-
         @Override
         public void onNext(Statistics stats) {
             try {
@@ -95,15 +93,8 @@ public class MonitorThread extends Thread {
                 long networkRx = stats.getNetworks().get("eth0").getRxBytes();
                 long networkTx = stats.getNetworks().get("eth0").getTxBytes();
                 String timestamp = stats.getRead();
-                containerMetrics.put("MemoryUsage", memoryUsage);
-                containerMetrics.put("CpuUsage", cpuUsage);
-                containerMetrics.put("NetworkRx", networkRx);
-                containerMetrics.put("NetworkTx", networkTx);
-                containerMetrics.put("Timestamp", timestamp);
-                containerMetrics.put("ContainerID", containerid);
-                containerMetrics.put("ImageName", DockerInstance.getContainer(containerid).getImage());
-                containerMetrics.put("Measurement", MonitorThread.getMeasurement());
-                persistMetrics(memoryUsage, cpuUsage, timestamp, containerid, DockerInstance.getContainer(containerid).getImage(), MonitorThread.getMeasurement());
+                persistMetrics(memoryUsage, cpuUsage, timestamp, containerid, networkRx,networkTx,
+                        DockerInstance.getContainer(containerid).getImage(), MonitorThread.getMeasurement());
                 dockerLock.unlock();
             } catch (NullPointerException e){
                 if(isContainerRunning(containerid)) {
@@ -133,11 +124,29 @@ public class MonitorThread extends Thread {
     }
 
 
-    private void persistMetrics(long memoryUsage, double cpuUsage, String timestamp, String containerid, String imageName, int measurement) {
+    private void persistMetrics(long memoryUsage, double cpuUsage, String timestamp, String containerid, long nr,long nt, String imageName, int measurement) {
         dockerLock.lock();
-        ContainerMetrics containerMetrics = new ContainerMetrics(memoryUsage, cpuUsage, timestamp, containerid, imageName,measurement);
+        ContainerMetrics containerMetrics = new ContainerMetrics(memoryUsage, cpuUsage, timestamp, containerid,nr ,nt, imageName,measurement);
+        DatabaseThread.addm(containerMetrics);
         metricsList.add(containerMetrics);
+        writeMetricsToCSV(containerMetrics);
         dockerLock.unlock();
+    }
+    private void writeMetricsToCSV(ContainerMetrics containerMetrics) {
+
+        String resourcePath = "metrics.csv";
+
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+
+            if (inputStream == null) {
+                Path filePath = Path.of(Objects.requireNonNull(getClass().getClassLoader().getResource("")).toURI()).resolve(resourcePath);
+                Files.createFile(filePath);
+            }
+            Path filePath = Path.of(getClass().getClassLoader().getResource(resourcePath).toURI());
+            Files.writeString(filePath, containerMetrics.toString() + System.lineSeparator(), StandardOpenOption.APPEND);
+        } catch (Exception e) {
+            System.err.println("Error writing metrics to CSV: " + e.getMessage());
+        }
     }
     private boolean isContainerRunning(String containerId) {
         try {
@@ -158,14 +167,18 @@ public class MonitorThread extends Thread {
         private final String  timestamp;
         private final String imageName;
         private final int measurement;
+        private final long networkRx;
+        private final long networkTx;
 
-        public ContainerMetrics(long memoryUsage, double cpuUsage, String timestamp, String containerId, String imageName,int measurement) {
+        public ContainerMetrics(long memoryUsage, double cpuUsage, String timestamp, String containerId, long nr,long nt, String imageName,int measurement) {
             this.memoryUsage = memoryUsage;
             this.cpuUsage = cpuUsage;
             this.timestamp = timestamp;
             this.containerId = containerId;
             this.imageName = imageName;
             this.measurement=measurement;
+            this.networkRx = nr;
+            this.networkTx = nt;
         }
 
         public long getMemoryUsage() {
@@ -200,6 +213,12 @@ public class MonitorThread extends Thread {
             }
             return -1;
         }
+        public long getNetworkRx(){
+            return networkRx;
+        }
+        public long getNetworkTx(){
+            return networkTx;
+        }
         public String getimageName() {
             try {
                 return imageName;
@@ -217,7 +236,7 @@ public class MonitorThread extends Thread {
             return null;
         }
         public String toString() {
-            return (measurement+" "+containerId + " " + memoryUsage +" "+ cpuUsage + " " + imageName +" "+" " + timestamp);
+            return (measurement+","+containerId + "," + memoryUsage +","+ cpuUsage + "," + imageName +","+"," + timestamp);
         }
     }
     private static DockerClient initializeDockerClient() {

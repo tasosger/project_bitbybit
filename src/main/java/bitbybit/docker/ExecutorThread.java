@@ -63,7 +63,6 @@ public class ExecutorThread extends Thread {
             }
 
         }
-        System.out.println("Stopping");
     }
 
 
