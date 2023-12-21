@@ -1,14 +1,16 @@
 package bitbybit.docker;
 
 import com.github.dockerjava.api.exception.NotFoundException;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.*;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class DatabaseHandler {
     private static String dbName = "container_metrics.db";
+    public static Queue<MonitorThread.ContainerMetrics> metrics = new  LinkedList<>() {};
 
     // Path to the embedded database file in resources
     private static String dbPath = "src/main/resources/" + dbName;
@@ -60,7 +62,7 @@ public class DatabaseHandler {
                 "timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, " +
                 "CPUusage REAL, " +
                 "memoryUsage REAL, " +
-                "NetoworkRx REAL, " +
+                "NetworkRx REAL, " +
                 "NetworkTx REAL, " +
                 "FOREIGN KEY (container_id) REFERENCES containers(container_id))";
         statement.executeUpdate(createMetricsTableQuery);
@@ -80,7 +82,6 @@ public class DatabaseHandler {
             preparedStatement.setDouble(4, c.getNetworkRx());
             preparedStatement.setDouble(5, c.getNetworkTx());
             preparedStatement.executeUpdate();
-
         }catch (SQLException e) {
             e.printStackTrace();
         }
@@ -103,6 +104,10 @@ public class DatabaseHandler {
         }catch (SQLException e) {
             e.printStackTrace();
         }
+
+    }
+    public static void addm(MonitorThread.ContainerMetrics c){
+        metrics.add(c);
     }
 
 }

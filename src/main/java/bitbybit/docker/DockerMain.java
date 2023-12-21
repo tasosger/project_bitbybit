@@ -7,32 +7,38 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
-
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+@SpringBootApplication
 public class DockerMain {
-    public static DockerImage dim;
-    public static DockerClient dockerClient;
 
     public static void main(String[] args) {
         //dockerClient = initializeDockerClient();
         // dim = new DockerImage();
-
+        SpringApplication.run(DockerMain.class,args);
         //try {
         //  dockerInstance.getExecutorThread().join();
         //} catch (InterruptedException e){
 
         //}
+        //DatabaseHandler.form_connection();
 
-         String containerid = DockerInstance.createContainer("mycontainer", "nginx:latest");
-         DatabaseThread t1 = new DatabaseThread();
-         t1.start();
+         String containerid = DockerInstance.createContainer("testcont", "nginx:latest");
+        //SpringApplication.run(DockerMain.class, args);
+         // Obtain the TestRestTemplate
+
+
+
+         //DatabaseThread t1 = new DatabaseThread();
+         //t1.start();
         //String containerid2 = DockerInstance.createContainer("mycontainer", "nginx:latest");
-          DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid, 5000));
+          //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid, 50000));
+
        // DockerInstance.getExecThread(containerid2).addTask(new ExecutorThread.StartContainerTask(containerid2, 15000));
         //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid,-1));
         //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.PauseContainerTask(containerid,2000));
         //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StopContainerTask(containerid));
-       DatabaseHandler.form_connection();
+
 
 // Wait for some time or perform other tasks
 

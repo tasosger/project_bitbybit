@@ -102,6 +102,7 @@ public class MonitorThread extends Thread {
                 }
             } catch (Exception e){
                 System.err.println("Error during metrics collection "+e.getMessage());
+                e.printStackTrace();
             }
         }
 
@@ -127,9 +128,8 @@ public class MonitorThread extends Thread {
     private void persistMetrics(long memoryUsage, double cpuUsage, String timestamp, String containerid, long nr,long nt, String imageName, int measurement) {
         dockerLock.lock();
         ContainerMetrics containerMetrics = new ContainerMetrics(memoryUsage, cpuUsage, timestamp, containerid,nr ,nt, imageName,measurement);
-        DatabaseThread.addm(containerMetrics);
+        DatabaseHandler.addm(containerMetrics);
         metricsList.add(containerMetrics);
-        writeMetricsToCSV(containerMetrics);
         dockerLock.unlock();
     }
     private void writeMetricsToCSV(ContainerMetrics containerMetrics) {

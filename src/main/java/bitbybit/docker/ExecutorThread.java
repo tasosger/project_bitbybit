@@ -2,6 +2,8 @@ package bitbybit.docker;
 
 
 
+import com.github.dockerjava.core.DockerContextMetaFile;
+
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -170,16 +172,14 @@ public class ExecutorThread extends Thread {
     public static class UnpauseContainerTask implements ContainerTask {
 
         private final String containerid;
-        private final DockerInstance dockerInstance;
-        public UnpauseContainerTask(String containerid, DockerInstance dockerInstance) {
-            this.dockerInstance = dockerInstance;
+        public UnpauseContainerTask(String containerid) {
             this.containerid = containerid;
         }
 
         @Override
         public void execute() {
             try {
-                dockerInstance.unpauseContainer(containerid);
+                DockerInstance.unpauseContainer(containerid);
             } catch (Exception e) {
                 System.err.println("Error while unpausing container");
             }
@@ -251,7 +251,8 @@ public class ExecutorThread extends Thread {
         @Override
         public void execute() {
             try {
-                DockerInstance.executeCommandInContainer(containerid, command);
+                String output = DockerInstance.executeCommandInContainer(containerid, command);
+                System.out.println(output);
             } catch (Exception e) {
                 System.err.println("Error while executing command in container");
             }

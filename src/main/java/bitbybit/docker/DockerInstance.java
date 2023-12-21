@@ -178,7 +178,7 @@ public class DockerInstance {
     public static ExecutorThread getExecThread(String containerid){
         try{
             for(ThreadPairs t: executorthreads){
-                if(t.getId()==containerid){
+                if(t.getId().equals(containerid)){
                     return (ExecutorThread) t.getThread();
                 }
             }
@@ -190,7 +190,7 @@ public class DockerInstance {
     public static MonitorThread getMonThread(String containerid){
         try{
             for(ThreadPairs t: monitorthreads){
-                if(t.getId()==containerid){
+                if(t.getId().equals(containerid)){
                     return (MonitorThread) t.getThread();
                 }
             }
