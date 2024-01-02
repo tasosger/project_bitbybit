@@ -1,124 +1,218 @@
 package bitbybit.docker;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.exception.DockerException;
+
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.core.DockerClientBuilder;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-@SpringBootApplication
-public class DockerMain {
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class DockerMain extends JFrame {
+    private JList<String> jList ;
+    private JPanel additionalButtonsPanel;
+    private JPanel contentPanel;
+        public DockerMain() {
+        setTitle("Docker App");
+        setSize(900, 750);
+            JPanel sideMenu = new JPanel();
+            sideMenu.setBackground(Color.DARK_GRAY);
+            sideMenu.setLayout(new GridLayout(0, 1));
+            String[] buttonLabels = {"Containers", "Images", "Volumes", "Subnets"};
+            for (String label : buttonLabels) {
+                JButton menuButton = new JButton(label);
+                menuButton.setForeground(Color.WHITE);
+                menuButton.setBackground(Color.DARK_GRAY);
+                menuButton.setPreferredSize(new Dimension(100, 40));
+                menuButton.setBorderPainted(false);
+                menuButton.setBorder(BorderFactory.createEmptyBorder(-5, -5, -5, -5));
+
+                menuButton.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+
+                        if ("Containers".equals(label)) {
+                            List<String> list = api_request("ListContainers");
+                            displayListInFrame(list,"Cont");
+                        }
+                        if ("Images".equals(label)){
+                            List<String> list = api_request("ListImages");
+                            displayListInFrame(list,"Im");
+                        }
+                        if("Subnets".equals(label)){
+                            List<String> list = api_request("ListSubnets");
+                            displayListInFrame(list,"Sub");
+                        }
+                        if("Volumes".equals(label)){
+                            List<String> list = api_request("ListVolumes");
+                            displayListInFrame(list,"Vol");
+                        }
+                    }
+                });
+
+                sideMenu.add(menuButton);
+            }
+            additionalButtonsPanel = new JPanel();
+            additionalButtonsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+            additionalButtonsPanel.setBackground(Color.DARK_GRAY);
+            additionalButtonsPanel.setPreferredSize(new Dimension(getWidth(), 40));
+            String[] additionalButtonLabels = {"All", "Running", "Paused"};
+            for (String label : additionalButtonLabels) {
+                JButton additionalButton = new JButton(label);
+                additionalButton.setForeground(Color.WHITE);
+                additionalButton.setBackground(Color.DARK_GRAY);
+                additionalButton.setPreferredSize(new Dimension(100, 30));
+                additionalButtonsPanel.add(additionalButton);
+            }
+
+
+            // Main content panel
+             contentPanel = new JPanel();
+            contentPanel.setBackground(Color.WHITE);
+            jList = new JList<>();
+            JScrollPane listScrollPane = new JScrollPane(jList);
+            contentPanel.add(listScrollPane,BorderLayout.CENTER);
+            // Set layout for the main content panel
+            contentPanel.setLayout(new BorderLayout());
+
+            // Add components to the main content panel
+            contentPanel.add(new JLabel("Main Content"), BorderLayout.CENTER);
+
+            setLayout(new BorderLayout());
+            add(sideMenu, BorderLayout.WEST);
+            add(contentPanel, BorderLayout.CENTER);
+
+    }
     public static void main(String[] args) {
-        //dockerClient = initializeDockerClient();
-        // dim = new DockerImage();
-        SpringApplication.run(DockerMain.class,args);
-        //try {
-        //  dockerInstance.getExecutorThread().join();
-        //} catch (InterruptedException e){
+             startSpringBootApp();
+             Initialization.initialize_db();
+             DatabaseThread dbt = new DatabaseThread();
+             dbt.start();
+            javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+               new DockerMain().setVisible(true);
 
-        //}
-        //DatabaseHandler.form_connection();
+            }
+        });
+    }
+    private static void startSpringBootApp() {
+        Class<?> springBootAppClass = SpringBootApp.class;
+        String[] springBootAppArgs = new String[0];
+        SpringApplication.run(springBootAppClass, springBootAppArgs);
+    }
+    private void displayListInFrame(List<String> itemList, String type) {
+        DefaultListModel<String> listModel = new DefaultListModel<>();
 
-         String containerid = DockerInstance.createContainer("testcont", "nginx:latest");
-        //SpringApplication.run(DockerMain.class, args);
-         // Obtain the TestRestTemplate
-
-
-
-         //DatabaseThread t1 = new DatabaseThread();
-         //t1.start();
-        //String containerid2 = DockerInstance.createContainer("mycontainer", "nginx:latest");
-          //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid, 50000));
-
-       // DockerInstance.getExecThread(containerid2).addTask(new ExecutorThread.StartContainerTask(containerid2, 15000));
-        //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StartContainerTask(containerid,-1));
-        //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.PauseContainerTask(containerid,2000));
-        //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StopContainerTask(containerid));
-
-
-// Wait for some time or perform other tasks
-
-// Stop the executor thread after some time or when done with container tasks
-        try {
-            System.out.println("Waiting");
-            Thread.sleep(15000);
-            System.out.println("Stopped Waiting");
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if (itemList != null) {
+            for (String item : itemList) {
+                listModel.addElement(item);
+            }
         }
-        //for(MonitorThread.ContainerMetrics c: MonitorThread.metricsList){
-        // System.out.println("metrics "+c);
-        //}
-      // DockerInstance.displayDiskVolumes();
 
-        //DockerInstance.getExecThread(containerid).stopthread();
-        //DockerInstance.getMonThread(containerid).stopThread();
-        //DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.RemoveContainerTask(containerid));
-        //DockerInstance.getMonThread(containerid).interrupt();
-        //executorThread.stopExecution();
-        //dockerInstance.startContainer(containerId);
-        //System.out.println("Container started.");
+        // Create JList and set its model
+        JList<String> jList = new JList<>(listModel);
+        jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Optional: Set selection mode
 
-        //monitorThread.start();
-        // try {
-        // monitorThread.join();
-        //} catch (InterruptedException e) {
-        //  e.printStackTrace();
-        //}
-        // monitorThread.printFinalMetrics();
+        // Add ListSelectionListener to the JList
+        jList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String selectedContainer = jList.getSelectedValue();
+                if (selectedContainer != null) {
+                    System.out.println("Selected container: " + selectedContainer);
+                    ContainerActionFrame ac =new ContainerActionFrame(selectedContainer);
+                    ac.setVisible(true);
+                }
+            }
+        });
 
-        // String[] command = { "sh", "-c", "echo Hello, Docker!" };
-        //String execId = dockerInstance.executeCommandInContainer(containerId, command);
-        //System.out.println("Command executed in container. Exec ID: " + execId + " " +containerId);
+        // Create a JScrollPane to contain the JList
+        JScrollPane scrollPane = new JScrollPane(jList);
 
+        // Clear existing components in the main content panel
+        contentPanel.removeAll();
 
-        // dockerInstance.stopContainer(containerId);
-        //System.out.println("Container stopped.");
+        // Set layout for the main content panel
+        contentPanel.setLayout(new BorderLayout());
 
-        //System.out.println(dockerInstance.getContainerLogs(containerId));
-
-        // Inspect container
-        //Container container = dockerInstance.inspectContainer(containerId);
-        //System.out.println("Container ID: " + container.getId());
-        //System.out.println("Container Image: " + container.getImage());
-
-
-
-            /*List<Container> containers = dockerInstance.listContainers();
-            System.out.println("Listing all containers:");
-            for (Container c : containers) {
-               System.out.println( c.getId());
-
-            }*/
-
-
-
-        //dockerInstance.close();
-        //dockerImage.close();
-    }
-
-
-    private static DockerClient initializeDockerClient() {
-        try {
-            return DockerClientBuilder.getInstance("tcp://localhost:2375").build();
-        } catch (Exception e){
-            System.out.println("Cannot initialize client");
-            System.exit(1);
+        // If the type is "Cont" (Containers), add additional buttons
+        if (type.equals("Cont")) {
+            JPanel additionalButtonsPanel = createAdditionalButtonsPanel();
+            contentPanel.add(additionalButtonsPanel, BorderLayout.NORTH);
         }
-        return null;
-    }
 
-    private static void showmenu() {
-        System.out.println("Choose a task");
-        System.out.println("1.Pull image");
-        System.out.println("2.Create container");
-        System.out.println("3.Start Container");
-        System.out.println("4.Stop container");
-        System.out.println("5.Exit");
-    }
-}
+        // Add JScrollPane to the main content panel
+        contentPanel.add(scrollPane, BorderLayout.CENTER);
 
+        // Repaint and revalidate the frame to reflect changes
+        revalidate();
+        repaint();
+    }
+    private List<String> api_request(String u){
+            try{
+                URL url=new URL("http://localhost:8080/"+u);
+                HttpURLConnection con =(HttpURLConnection) url.openConnection();
+                con.setRequestMethod("GET");
+                int respc = con.getResponseCode();
+                if (respc == HttpURLConnection.HTTP_OK){
+                    BufferedReader r = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                    String line;
+                    List<String> res = new ArrayList<>();
+                    while ((line = r.readLine())!=null){
+                        res.add(line);
+                    }
+                    System.out.println(res.size());
+                    return res;
+                } else {
+                    System.out.println("err"+con.getResponseCode());
+                }
+            } catch (IOException e){
+                e.printStackTrace();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+            return List.of("error");
+    }
+    private JPanel createAdditionalButtonsPanel() {
+        JPanel additionalButtonsPanel = new JPanel();
+        additionalButtonsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        additionalButtonsPanel.setBackground(Color.DARK_GRAY);
+        additionalButtonsPanel.setPreferredSize(new Dimension(getWidth(), 40));
+
+        String[] additionalButtonLabels = {"All", "Running", "Paused"};
+        for (String label : additionalButtonLabels) {
+            JButton additionalButton = new JButton(label);
+            additionalButton.setForeground(Color.WHITE);
+            additionalButton.setBackground(Color.DARK_GRAY);
+            additionalButton.setPreferredSize(new Dimension(100, 30));
+            additionalButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String apiEndpoint= "";
+                    List<String> list = new ArrayList<>();
+                   if(label.equals("All")) {
+                       list = api_request("ListContainers");
+                   }
+                   if(label.equals("Running")) {
+                       list = api_request("ListRunningContainers");
+                   }
+                   if(label.equals("Paused")){
+                       list = api_request("ListPausedContainers");
+                   }
+
+                    displayListInFrame(list,"Cont");
+                }
+            });
+            additionalButtonsPanel.add(additionalButton);
+        }
+
+        return additionalButtonsPanel;
+    }
+    }

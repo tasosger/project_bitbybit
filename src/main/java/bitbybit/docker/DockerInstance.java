@@ -182,6 +182,7 @@ public class DockerInstance {
                     return (ExecutorThread) t.getThread();
                 }
             }
+            return null;
         }  catch (NotFoundException e){
             System.err.println("Cantainer not found");
         }
@@ -335,6 +336,7 @@ public class DockerInstance {
     }
     public static String getContainerIdByName(String containerName) {
         try {
+            containers = listContainers();
             for (Container container : containers) {
                 if (Arrays.asList(container.getNames()).contains("/" + containerName)) {
                     return container.getId();
@@ -374,23 +376,16 @@ public class DockerInstance {
         }
         return null;
     }
-    public static void displayDiskVolumes()    {
+    public static List<InspectVolumeResponse> displayDiskVolumes()    {
         try {
         ListVolumesResponse listVolumesResponse = dockerClient.listVolumesCmd().exec();
         List<InspectVolumeResponse> volumes = listVolumesResponse.getVolumes();
-        if (volumes.isEmpty()) {
-            System.out.println("No volumes found.");
-        } else {
-            System.out.println("DISPLAYING VOLUMES");
-            for (InspectVolumeResponse inspectVolume : volumes) {
-                System.out.println("Volume Name: " + inspectVolume.getName());
-                System.out.println("Driver: " + inspectVolume.getDriver());
-                System.out.println("Mountpoint: " + inspectVolume.getMountpoint());
-            }
-        }
+        return volumes;
+
     } catch (Exception e) {
         System.err.println("Error displaying disk volumes: " + e.getMessage());
     }
+        return null;
     }
     public static  String getVolumeMounts(String containerId) {
         try {
@@ -408,30 +403,14 @@ public class DockerInstance {
         return null;
     }
 
-    public static void displaySubnets() {
+    public static List<Network> displaySubnets() {
         try {
         List<Network> networks = dockerClient.listNetworksCmd().exec();
-            if (networks.isEmpty()) {
-                System.out.println("No networks found.");
-            } else {
-                System.out.println("DISPLAYING NETWORKS");
-        for (Network network : networks) {
-            System.out.println("Network Name: " + network.getName());
-            List<Network.Ipam.Config> ipamConfigs = network.getIpam().getConfig();
-
-            if (!ipamConfigs.isEmpty()) {
-                System.out.println("Subnet: " + ipamConfigs.get(0).getSubnet());
-                System.out.println("-----------------------");
-            } else {
-                System.out.println("No IPAM configurations found for network: " + network.getName());
-            }
-        }
-        }
-
-            } catch (Exception e) {
+        return networks;
+        } catch (Exception e) {
         System.err.println("Error displaying subnets: " + e.getMessage());
-        e.printStackTrace();
     }
+        return null;
     }
 
     public static List<Container> listrunningContainer(){
@@ -516,7 +495,7 @@ public class DockerInstance {
                         ("tcp://localhost:2375")
                 .build();
     }
-    private static class ThreadPairs{
+    public static class ThreadPairs{
         private String containerid;
         private Thread thread;
         public ThreadPairs(String containerid, Thread thread){

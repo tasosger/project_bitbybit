@@ -18,7 +18,7 @@ import java.io.IOException;
 public class DockerImage {
     private static final DockerClient dockerClient= initializeDockerClient();
     public static List<Image> images;
-    private static void pullImage(String imageName) {
+    public static void pullImage(String imageName) {
         try {
             dockerClient.pullImageCmd(imageName)
                     .exec(new PullImageResultCallback())
