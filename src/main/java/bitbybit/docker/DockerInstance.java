@@ -4,10 +4,10 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.exception.NotModifiedException;
-import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.model.Frame;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.*;
@@ -15,8 +15,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import com.github.dockerjava.api.exception.ConflictException;
-import com.github.dockerjava.api.model.Network;
-import com.github.dockerjava.api.model.Volume;
 import com.github.dockerjava.core.DockerClientBuilder;
 
 public class DockerInstance {
@@ -49,7 +47,7 @@ public class DockerInstance {
                     .withName(containerName)
                     .exec();
             containers = listContainers();
-            System.out.println("Container created successfully: " + container.getId());
+            Logger.log("Container created successfully: " + container.getId());
             executorthreads.add(new ThreadPairs(container.getId(), new ExecutorThread()));
             monitorthreads.add(new ThreadPairs(container.getId(), new MonitorThread(container.getId())));
             Objects.requireNonNull(getExecThread(container.getId())).start();
@@ -57,11 +55,11 @@ public class DockerInstance {
             DatabaseHandler.add_container(container.getId(), containerName , image);
             return container.getId();
         } catch (ConflictException e) {
-            System.err.println("Container name already in use. Generating new name");
+            System.out.println("Container name already in use. Generating new name");
             String uniqueContainerName = generateUniqueContainerName(containerName);
             return createContainer(uniqueContainerName, image);
         } catch (Exception e) {
-            System.err.println("Cannot create container"+ " " + e.getMessage());
+            Logger.log("Cannot create container"+ " " + e.getMessage());
         } finally {
            dockerLock.unlock();
         }
@@ -73,14 +71,13 @@ public class DockerInstance {
               throw new ContainerAlreadyRunningException("Container is already running with ID: " + containerId);
             }
             dockerClient.startContainerCmd(containerId).exec();
-            System.out.println("Container Started successfully: "+ containerId);
+           Logger.log("Container Started successfully: "+ containerId);
         }catch (NotFoundException e) {
-           System.err.println("Container not found with ID: " + containerId + " " + e.getMessage());
+           Logger.log("Container not found with ID: " + containerId + " " + e.getMessage());
        } catch (ContainerAlreadyRunningException e){
-           System.err.println("Container is already running with ID: " + containerId+ " " + e.getMessage());
+           Logger.log("Container is already running with ID: " + containerId+ " " + e.getMessage());
         }catch (Exception e) {
-            System.err.println("Error starting container with ID: " + containerId+ " " + e.getMessage());
-            e.printStackTrace();
+           Logger.log("Error starting container with ID: " + containerId+ " " + e.getMessage());
         }
     }
     public static String executeCommandInContainer(String containerId, String[] command)  {
@@ -110,7 +107,7 @@ public class DockerInstance {
 
                 @Override
                 public void onError(Throwable throwable) {
-                    System.err.println("Error during command execution: " + throwable.getMessage());
+                    Logger.log("Error during command execution: " + throwable.getMessage());
                     commandCompleted.countDown();
                 }
 
@@ -130,11 +127,11 @@ public class DockerInstance {
             commandCompleted.await();
             return commandOutput.toString();
         }catch (ContainerNotRunningException e) {
-            System.err.println("Container is not running"+ " " + e.getMessage());
+            Logger.log("Container is not running"+ " " + e.getMessage());
         } catch (NotFoundException e) {
-            System.err.println("Container not found with ID: " + containerId+ " " + e.getMessage());
+            Logger.log("Container not found with ID: " + containerId+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Error during command execution: " + e.getMessage());
+            Logger.log("Error during command execution: " + e.getMessage());
         }
         return null;
     }
@@ -143,16 +140,17 @@ public class DockerInstance {
             if (!isContainerRunning(containerId)) {
                 throw  new ContainerNotRunningException("Container is not running");
             }
+            Logger.log("Container stopped successfully: " + containerId);
             StopContainerCmd stopContainerCmd = dockerClient.stopContainerCmd(containerId);
             stopContainerCmd.exec();
-            System.out.println("Container stopped successfully: " + containerId);
+
         }catch(ContainerNotRunningException e) {
-            System.err.println("Container is not running"+ " " + e.getMessage());
+            Logger.log("Container is not running"+ " " + e.getMessage());
             e.printStackTrace();
         }catch (NotFoundException e) {
-            System.err.println("Container not found with ID: " + containerId+ " " + e.getMessage());
+            Logger.log("Container not found with ID: " + containerId+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Cannot stop container"+ " " + e.getMessage());
+            Logger.log("Cannot stop container"+ " " + e.getMessage());
         }
     }
     public static void killContainer(String containerId) {
@@ -163,14 +161,13 @@ public class DockerInstance {
             }
             KillContainerCmd killContainerCmd = dockerClient.killContainerCmd(containerId);
             killContainerCmd.exec();
-            System.out.println("Bye Bye");
             containers = listContainers();
         } catch(ContainerNotRunningException e) {
-            System.err.println("Container is not running"+ " " + e.getMessage());
+            Logger.log("Container is not running"+ " " + e.getMessage());
         }catch (NotFoundException e) {
-            System.err.println("Container not found with ID: " + containerId+ " " + e.getMessage());
+            Logger.log("Container not found with ID: " + containerId+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Cannot kill container"+ " " + e.getMessage());
+            Logger.log("Cannot kill container"+ " " + e.getMessage());
         } finally {
             dockerLock.unlock();
         }
@@ -184,7 +181,7 @@ public class DockerInstance {
             }
             return null;
         }  catch (NotFoundException e){
-            System.err.println("Cantainer not found");
+            Logger.log("Container not found");
         }
         return null;
     }
@@ -196,7 +193,7 @@ public class DockerInstance {
                 }
             }
         }  catch (NotFoundException e){
-            System.err.println("Cantainer not found");
+            Logger.log("Container not found");
         }
         return null;
     }
@@ -206,13 +203,13 @@ public class DockerInstance {
                 throw  new ContainerNotRunningException("Container is not running");
             }
             dockerClient.pauseContainerCmd(containerId).exec();
-            System.out.println("Container paused successfully: " + containerId);
+            Logger.log("Container paused successfully: " + containerId);
         }catch (ContainerNotRunningException e){
-            System.err.println("Container is not running"+ " " + e.getMessage());
+            Logger.log("Container is not running"+ " " + e.getMessage());
         }catch (NotFoundException e) {
-            System.err.println("Container not found with ID: " + containerId+ " " + e.getMessage());
+            Logger.log("Container not found with ID: " + containerId+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Cannot stop container"+ containerId+ " " + e.getMessage());
+            Logger.log("Cannot pause container"+ containerId+ " " + e.getMessage());
         }
     }
     public static void unpauseContainer(String containerId) {
@@ -221,45 +218,43 @@ public class DockerInstance {
                 throw  new ContainerNotRunningException("Container is not running");
             }
             dockerClient.unpauseContainerCmd(containerId).exec();
-            System.out.println("Unpaused container " + containerId);
+            Logger.log("Unpaused container " + containerId);
         } catch (ContainerNotRunningException e){
-            System.err.println("Container is running. Cannot unpause it"+ " " + e.getMessage());
+            Logger.log("Container is running. Cannot unpause it"+ " " + e.getMessage());
         }catch (NotFoundException e) {
-            System.err.println("Container not found: " + containerId+ " " + e.getMessage());
+            Logger.log("Container not found: " + containerId+ " " + e.getMessage());
         } catch (NotModifiedException e) {
-            System.out.println("Container is not paused: " + containerId+ " " + e.getMessage());
+            Logger.log("Container is not paused: " + containerId+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Error unpausing container with ID: " + containerId+ " " + e.getMessage());
+            Logger.log("Error unpausing container with ID: " + containerId+ " " + e.getMessage());
         }
     }
     public static void restartContainer(String containerId)  {
         try {
             dockerClient.restartContainerCmd(containerId).exec();
-            System.out.println("Restarted container successfully: " + containerId);
+            Logger.log("Restarted container successfully: " + containerId);
         }catch (NotFoundException e) {
-            System.err.println("Container not found with ID: " + containerId+ " " + e.getMessage());
+            Logger.log("Container not found with ID: " + containerId+ " " + e.getMessage());
         }catch (Exception e){
-            System.err.println("Error restarting container: " + containerId+ " " + e.getMessage());
+            Logger.log("Error restarting container: " + containerId+ " " + e.getMessage());
         }
     }
     public static void removeContainer(String containerId) {
         try {
             if (!containerExists(containerId)) {
-                System.err.println("Container with ID " + containerId + " does not exist.");
+                Logger.log("Container with ID " + containerId + " does not exist.");
                 return;
             }
             if (isContainerRunning(containerId)) {
                 stopContainer(containerId);
             }
             getMonThread(containerId).interrupt();
-            System.out.println("Removing container");
             RemoveContainerCmd removeContainerCmd = dockerClient.removeContainerCmd(containerId);
             removeContainerCmd.exec();
             getExecThread(containerId).stopthread();
-            System.out.println("Container with ID " + containerId + " removed successfully.");
-            containers = listContainers();
+            Logger.log("Container with ID " + containerId + " removed successfully.");
         } catch (Exception e) {
-            System.err.println("Error removing container with ID: " + containerId+ " " + e.getMessage());
+            Logger.log("Error removing container with ID: " + containerId+ " " + e.getMessage());
         }
     }
     public static Container getContainer(String containerId) {
@@ -278,14 +273,13 @@ public class DockerInstance {
         }
         return null;
     }
-    public static String getContainerLogs(String containerId)  {
+    public static StringBuilder getContainerLogs(String containerId)  {
         try {
             if (!isContainerRunning(containerId)) {
                 throw  new ContainerNotRunningException("Container is not running");
             }
             InspectContainerResponse inspectionResponse = dockerClient.inspectContainerCmd(containerId).exec();
             String logPath = inspectionResponse.getLogPath();
-            System.out.println("Log path: " + logPath);
             LogContainerCmd logContainerCmd = dockerClient.logContainerCmd(containerId)
                     .withStdOut(true)
                     .withStdErr(true)
@@ -301,7 +295,7 @@ public class DockerInstance {
 
                 @Override
                 public void onNext(Frame item) {
-                    logs.append(new String(item.getPayload()));
+                    logs.append(new String(item.getPayload())+"\n");
                 }
 
                 @Override
@@ -322,15 +316,15 @@ public class DockerInstance {
         try {
             latch.await(30, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            System.out.println("Interrupted while waiting for log collection " + e.getMessage());
+            Logger.log("Interrupted while waiting for log collection " + e.getMessage());
         }
-        return logs.toString();
+        return logs;
         } catch (ContainerNotRunningException e){
-            System.err.println("Container not running "+ containerId+" "+e.getMessage());
+            Logger.log("Container not running "+ containerId+" "+e.getMessage());
         }catch (NotFoundException e) {
-            System.err.println("Container not found with ID: " + containerId+ " " + e.getMessage());
+            Logger.log("Container not found with ID: " + containerId+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Error during log retrieval: " + e.getMessage());
+            Logger.log("Error during log retrieval: " + e.getMessage());
         }
         return null;
     }
@@ -372,7 +366,7 @@ public class DockerInstance {
                     .withShowAll(true);
             return listContainersCmd.exec();
         } catch (Exception e){
-            System.err.println("Error during listing"+ " " + e.getMessage());
+            Logger.log("Error during listing"+ " " + e.getMessage());
         }
         return null;
     }
@@ -383,7 +377,7 @@ public class DockerInstance {
         return volumes;
 
     } catch (Exception e) {
-        System.err.println("Error displaying disk volumes: " + e.getMessage());
+            Logger.log("Error displaying disk volumes: " + e.getMessage());
     }
         return null;
     }
@@ -393,11 +387,15 @@ public class DockerInstance {
 
             for (Container container : containers) {
                 if (container.getId().equals(containerId)) {
-                    return container.getMounts().toString();
+                   List<ContainerMount> cm =  container.getMounts();
+
+                    return cm.toString();
                 }
+
             }
+
         } catch (Exception e) {
-            System.out.println("Error getting volume mounts for container " + containerId+" "+e.getMessage());
+            Logger.log("Error getting volume mounts for container " + containerId+" "+e.getMessage());
         }
 
         return null;
@@ -408,7 +406,7 @@ public class DockerInstance {
         List<Network> networks = dockerClient.listNetworksCmd().exec();
         return networks;
         } catch (Exception e) {
-        System.err.println("Error displaying subnets: " + e.getMessage());
+            Logger.log("Error displaying subnets: " + e.getMessage());
     }
         return null;
     }
@@ -419,7 +417,7 @@ public class DockerInstance {
                     .withShowAll(false);
             return listContainersCmd.exec();
         } catch (Exception e){
-            System.err.println("Error during listing"+ " " + e.getMessage());
+            Logger.log("Error during listing"+ " " + e.getMessage());
         }
         return null;
     }
@@ -429,7 +427,7 @@ public class DockerInstance {
                     .withShowAll(false).withStatusFilter(Collections.singleton("paused"));
             return listContainersCmd.exec();
         } catch (Exception e){
-            System.err.println("Error during listing"+ " " + e.getMessage());
+            Logger.log("Error during listing"+ " " + e.getMessage());
         }
         return null;
     }
@@ -514,7 +512,7 @@ public class DockerInstance {
             try{
                 return containerid;
             } catch (Exception e){
-                System.err.println("Error while returning id");
+                Logger.log("Error while returning id");
             }
             return null;
         }

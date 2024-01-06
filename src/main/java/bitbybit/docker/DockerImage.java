@@ -24,13 +24,13 @@ public class DockerImage {
                     .exec(new PullImageResultCallback())
                     .awaitCompletion(30, TimeUnit.SECONDS);
             images = listImages();
-            System.out.println("Image pulled successfully: " + imageName);
+            Logger.log("Image pulled successfully: " + imageName);
         } catch (InterruptedException e) {
-            System.err.println("Pull Interrupted");
+            Logger.log("Pull Interrupted");
         } catch (NotFoundException e) {
-            System.err.println("Image does not exist"+ " " + e.getMessage());
+            Logger.log("Image does not exist"+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Image can not be pulled"+ " " + e.getMessage());
+            Logger.log("Image can not be pulled"+ " " + e.getMessage());
         }
     }
     public static void pullImage(String imageName, String tag) {
@@ -40,13 +40,13 @@ public class DockerImage {
                     .exec(new PullImageResultCallback())
                     .awaitCompletion(30, TimeUnit.SECONDS);
             images = listImages();
-            System.out.println("Image pulled successfully: " + imageName);
+            Logger.log("Image pulled successfully: " + imageName);
         } catch (InterruptedException e) {
-            System.err.println("Pull Interrupted"+ " " + e.getMessage());
+            Logger.log("Pull Interrupted"+ " " + e.getMessage());
         } catch (NotFoundException e) {
-            System.err.println("Image does not exist"+ " " + e.getMessage());
+            Logger.log("Image does not exist"+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Image can not be pulled"+ " " + e.getMessage());
+            Logger.log("Image can not be pulled"+ " " + e.getMessage());
         }
     }
     public static void pullImageIfNotExists(String imageName) {
@@ -66,6 +66,7 @@ public class DockerImage {
     }
     public static String getImageIdByName(String imageName) {
         try {
+            images =    DockerImage.listImages();
             for (Image image : images) {
                 if (Arrays.asList(image.getRepoTags()).contains(imageName)) {
                     return image.getId();
@@ -97,12 +98,11 @@ public class DockerImage {
     public static void removeImage(String imageID)  {
         try {
             dockerClient.removeImageCmd(imageID).exec();
-            System.out.println("Image removed: " + imageID);
-            images = listImages();
+            Logger.log("Image removed: " + imageID);
         } catch (NotFoundException e) {
-            System.err.println("Image does not exist"+ " " + e.getMessage());
+            Logger.log("Image does not exist"+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Cannot remove image"+ " " + e.getMessage());
+            Logger.log("Cannot remove image"+ " " + e.getMessage());
         }
     }
     public static List<Image> listImages() {
@@ -110,7 +110,7 @@ public class DockerImage {
             ListImagesCmd listImagesCmd = dockerClient.listImagesCmd();
             return listImagesCmd.exec();
         } catch (Exception e) {
-            System.err.println("Cannot list images"+ " " + e.getMessage());
+            Logger.log("Cannot list images"+ " " + e.getMessage());
         }
         return null;
     }
@@ -130,9 +130,9 @@ public class DockerImage {
         try {
             return dockerClient.inspectImageCmd(imageID).exec();
         } catch (NotFoundException e) {
-            System.err.println("Image does not exist"+ " " + e.getMessage());
+            Logger.log("Image does not exist"+ " " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Cannot return inspect object"+ " " + e.getMessage());
+            Logger.log("Cannot return inspect object"+ " " + e.getMessage());
         }
         return null;
     }

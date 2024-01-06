@@ -32,6 +32,11 @@ public class ExecutorThread extends Thread {
     @Override
     public void run() {
       while(shouldrun) {
+          try{
+              Thread.sleep(5000);
+          } catch (InterruptedException e){
+              e.printStackTrace();
+          }
             while (!taskQueue.isEmpty() && shouldrun) {
                 ContainerTask task = taskQueue.poll();
                 if (task != null) {
@@ -51,17 +56,7 @@ public class ExecutorThread extends Thread {
                             task.execute(((RestartContainerTask) task).getmil());
                         } else task.execute();
                     } else task.execute();
-                    try {
-                        Thread.sleep(5000);
-                    } catch (InterruptedException e){
-                        System.err.println("Task execution interrupted");
-                    }
                 }
-            }
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e){
-
             }
 
         }
