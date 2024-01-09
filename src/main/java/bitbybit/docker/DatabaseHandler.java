@@ -185,7 +185,8 @@ public class DatabaseHandler {
                     StringBuilder resultStringBuilder = new StringBuilder();
                     try {
 
-                        resultStringBuilder.append("Metric ID\tContainer Name\tTimestamp\tCPU Usage\tMemory Usage\tNetwork Rx\tNetwork Tx\n");
+                        resultStringBuilder.append("Metric ID  Container Name  Timestamp  "
+                                +"CPU Usage  Memory Usage  Network Rx  Network Tx\n");
 
                         // Iterate over the result set and append values to the StringBuilder
                         while (resultSet.next()) {
@@ -202,9 +203,9 @@ public class DatabaseHandler {
                             String formattedTimestamp = dateFormat2.format(timestamp);
 
                             // Append values to the StringBuilder
-                            resultStringBuilder.append(metricId).append("  \t").append(containerId).append("  \t")
-                                    .append(formattedTimestamp).append("  \t").append(cpuUsage).append("  \t")
-                                    .append(memoryUsage).append("  \t").append(networkRx).append("  \t").append(networkTx)
+                            resultStringBuilder.append(metricId).append("           ").append(containerId).append("            ")
+                                    .append(formattedTimestamp).append("       ").append(cpuUsage).append("          ")
+                                    .append(memoryUsage).append("          ").append(networkRx).append("              ").append(networkTx)
                                     .append("\n");
 
                         }
@@ -256,10 +257,11 @@ public class DatabaseHandler {
                             String formattedTimestamp = dateFormat2.format(timestamp);
 
                             // Append values to the StringBuilder
-                            resultStringBuilder.append(metricId).append("  \t").append(containerId).append("  \t")
-                                    .append(formattedTimestamp).append("  \t").append(cpuUsage).append("  \t")
-                                    .append(memoryUsage).append("  \t").append(networkRx).append("  \t").append(networkTx)
+                            resultStringBuilder.append(metricId).append("    \t").append(containerId).append("    \t")
+                                    .append(formattedTimestamp).append("    \t").append(cpuUsage).append("    \t")
+                                    .append(memoryUsage).append("    \t").append(networkRx).append("    \t").append(networkTx)
                                     .append("\n");
+
 
                         }
                         return resultStringBuilder.toString();

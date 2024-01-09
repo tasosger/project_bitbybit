@@ -17,7 +17,7 @@ public class ImageActionFrame extends JFrame {
     public ImageActionFrame(String imageName){
         im = imageName.substring(imageName.indexOf(":") + 2, imageName.indexOf(","));
         setTitle("Image Actions");
-        setSize(500, 400);
+        setSize(100, 150);
 
         // Create JList for actions
         DefaultListModel<String> actionListModel = new DefaultListModel<>();

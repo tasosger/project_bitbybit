@@ -31,49 +31,17 @@ public class DockerMain extends JFrame {
         setSize(900, 750);
             JPanel sideMenu = new JPanel();
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            sideMenu.setBackground(Color.DARK_GRAY);
+            sideMenu.setBackground(new Color(44, 62, 80));
             sideMenu.setLayout(new GridLayout(0, 1));
             String[] buttonLabels = {"Instructions","Containers", "Images", "Volumes", "Subnets"};
             for (String label : buttonLabels) {
-                JButton menuButton = new JButton(label);
-                menuButton.setForeground(Color.WHITE);
-                menuButton.setBackground(Color.DARK_GRAY);
-                menuButton.setPreferredSize(new Dimension(100, 40));
-                menuButton.setBorderPainted(false);
-                menuButton.setBorder(BorderFactory.createEmptyBorder(-5, -5, -5, -5));
-
-                menuButton.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-
-                        if ("Containers".equals(label)) {
-                            List<String> list = api_request("ListContainers");
-                            displayListInFrame(list,"Cont");
-                        }
-                        if ("Images".equals(label)){
-                            List<String> list = api_request("ListImages");
-                            displayListInFrame(list,"Im");
-                        }
-                        if("Subnets".equals(label)){
-                            List<String> list = api_request("ListSubnets");
-                            displayListInFrame(list,"Sub");
-                        }
-                        if("Volumes".equals(label)){
-                            List<String> list = api_request("ListVolumes");
-                            displayListInFrame(list,"Vol");
-                        }
-                        if("Instructions".equals(label)){
-
-                            show_instructions();
-                        }
-                    }
-                });
+                JButton menuButton = getjButton(label);
 
                 sideMenu.add(menuButton);
             }
             additionalButtonsPanel = new JPanel();
             additionalButtonsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-            additionalButtonsPanel.setBackground(Color.DARK_GRAY);
+            additionalButtonsPanel.setBackground(Color.GRAY);
             additionalButtonsPanel.setPreferredSize(new Dimension(getWidth(), 40));
 
 
@@ -84,7 +52,6 @@ public class DockerMain extends JFrame {
             jList = new JList<>();
             JScrollPane listScrollPane = new JScrollPane(jList);
             contentPanel.add(listScrollPane,BorderLayout.CENTER);
-            // Set layout for the main content panel
             contentPanel.setLayout(new BorderLayout());
 
             setLayout(new BorderLayout());
@@ -94,6 +61,44 @@ public class DockerMain extends JFrame {
             show_instructions();
             show_instructions();
     }
+
+    private JButton getjButton(String label) {
+        JButton menuButton = new JButton(label);
+        menuButton.setForeground(Color.WHITE);
+        menuButton.setBackground(new Color(52, 73, 94));
+        menuButton.setPreferredSize(new Dimension(100, 40));
+        menuButton.setBorderPainted(false);
+        menuButton.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 5));
+
+        menuButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                if ("Containers".equals(label)) {
+                    List<String> list = api_request("ListContainers");
+                    displayListInFrame(list,"Cont");
+                }
+                if ("Images".equals(label)){
+                    List<String> list = api_request("ListImages");
+                    displayListInFrame(list,"Im");
+                }
+                if("Subnets".equals(label)){
+                    List<String> list = api_request("ListSubnets");
+                    displayListInFrame(list,"Sub");
+                }
+                if("Volumes".equals(label)){
+                    List<String> list = api_request("ListVolumes");
+                    displayListInFrame(list,"Vol");
+                }
+                if("Instructions".equals(label)){
+
+                    show_instructions();
+                }
+            }
+        });
+        return menuButton;
+    }
+
     public void show_instructions(){
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
@@ -108,6 +113,8 @@ public class DockerMain extends JFrame {
         headerPanel.add(label1);
         headerPanel.add(label2);
         JTextArea instructionsTextArea = new JTextArea();
+        instructionsTextArea.setBackground(Color.WHITE);
+        instructionsTextArea.setForeground(Color.BLACK);
         instructionsTextArea.setText("Instructions:\n1.Containers Tab\n\t-Select from the list the container you want to use" +
                 "\n\t-Select the desired action\n\t-Some actions (eg. start) will require the number of milliseconds you want the action to be executed for" +
                 "\n\t-If you do not want to specify the milliseconds enter -1\n\t-You can view container measurements by pressing the measurements button\n\t" +
@@ -148,41 +155,7 @@ public class DockerMain extends JFrame {
         SpringApplication.run(springBootAppClass, springBootAppArgs);
     }
     public void displayListInFrame(List<String> itemList, String type) {
-        DefaultListModel<String> listModel = new DefaultListModel<>();
-
-        if (itemList != null) {
-            for (String item : itemList) {
-                listModel.addElement(item);
-            }
-        }
-
-        // Create JList and set its model
-        JList<String> jList = new JList<>(listModel);
-        jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Optional: Set selection mode
-        if(type .equals( "Cont")) {
-            // Add ListSelectionListener to the JList
-            jList.addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting()) {
-                    String selectedContainer = jList.getSelectedValue();
-                    if (selectedContainer != null) {
-                        ContainerActionFrame ac = new ContainerActionFrame(selectedContainer);
-                        ac.setVisible(true);
-                    }
-                }
-            });
-        }
-        if(type .equals( "Im")) {
-            // Add ListSelectionListener to the JList
-            jList.addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting()) {
-                    String selectedImage = jList.getSelectedValue();
-                    if (selectedImage != null) {
-                        ImageActionFrame imf = new ImageActionFrame(selectedImage);
-                        imf.setVisible(true);
-                    }
-                }
-            });
-        }
+        JList<String> jList = getjList(itemList, type);
         // Create a JScrollPane to contain the JList
         JScrollPane scrollPane = new JScrollPane(jList);
 
@@ -209,6 +182,46 @@ public class DockerMain extends JFrame {
         revalidate();
         repaint();
     }
+
+    private static JList<String> getjList(List<String> itemList, String type) {
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+
+        if (itemList != null) {
+            for (String item : itemList) {
+                listModel.addElement(item);
+            }
+        }
+
+        // Create JList and set its model
+        JList<String> jList = new JList<>(listModel);
+        jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // Optional: Set selection mode
+        if(type.equals( "Cont")) {
+            // Add ListSelectionListener to the JList
+            jList.addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    String selectedContainer = jList.getSelectedValue();
+                    if (selectedContainer != null) {
+                        ContainerActionFrame ac = new ContainerActionFrame(selectedContainer);
+                        ac.setVisible(true);
+                    }
+                }
+            });
+        }
+        if(type.equals( "Im")) {
+            // Add ListSelectionListener to the JList
+            jList.addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting()) {
+                    String selectedImage = jList.getSelectedValue();
+                    if (selectedImage != null) {
+                        ImageActionFrame imf = new ImageActionFrame(selectedImage);
+                        imf.setVisible(true);
+                    }
+                }
+            });
+        }
+        return jList;
+    }
+
     protected static List<String> api_request(String u){
             try{
                 URL url=new URL("http://localhost:8080/"+u);
@@ -236,18 +249,18 @@ public class DockerMain extends JFrame {
     private JPanel pull_image_Panel(){
         JPanel pullPanel = new JPanel();
         pullPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        pullPanel.setBackground(Color.DARK_GRAY);
+        pullPanel.setBackground(new Color(52, 73, 94));
         pullPanel.setPreferredSize(new Dimension(getWidth(), 40));
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        leftPanel.setBackground(Color.DARK_GRAY);
+        leftPanel.setBackground(new Color(52, 73, 94));
         JButton pullButton = new JButton("Pull Image");
         pullButton.addActionListener(e -> {
             PullFrame pf = new PullFrame();
             pf.setVisible(true);
         });
         pullButton.setForeground(Color.WHITE);
-        pullButton.setBackground(Color.DARK_GRAY);
+        pullButton.setBackground(new Color(34, 49, 63));
         pullButton.setPreferredSize(new Dimension(100, 30));
         pullPanel.add(pullButton);
         return pullPanel;
@@ -255,58 +268,70 @@ public class DockerMain extends JFrame {
     private JPanel createAdditionalButtonsPanel(DockerMain d) {
         JPanel additionalButtonsPanel = new JPanel();
         additionalButtonsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        additionalButtonsPanel.setBackground(Color.DARK_GRAY);
+        additionalButtonsPanel.setBackground(new Color(52, 73, 94));
         additionalButtonsPanel.setPreferredSize(new Dimension(getWidth(), 40));
 
         String[] additionalButtonLabels = {"All", "Running", "Paused","Measurements"};
         JPanel leftPanel = new JPanel();
         leftPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        leftPanel.setBackground(Color.DARK_GRAY);
+        leftPanel.setBackground(new Color(52, 73, 94));
         for (String label : additionalButtonLabels) {
-            JButton additionalButton = new JButton(label);
-            additionalButton.setForeground(Color.WHITE);
-            additionalButton.setBackground(Color.DARK_GRAY);
-            additionalButton.setPreferredSize(new Dimension(130, 30));
-            additionalButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (label.equals("Measurements")) {
-                        DateIdFrame df = new DateIdFrame(d);
-                        df.setVisible(true);
-                    } else {
-                        String apiEndpoint = "";
-                        List<String> list = new ArrayList<>();
-                        if (label.equals("All")) {
-                            list = api_request("ListContainers");
-                        }
-                        if (label.equals("Running")) {
-                            list = api_request("ListRunningContainers");
-                        }
-                        if (label.equals("Paused")) {
-                            list = api_request("ListPausedContainers");
-                        }
-
-                        displayListInFrame(list, "Cont");
-                    }
-                }
-            });
+            JButton additionalButton = getjButton(d, label);
             additionalButtonsPanel.add(additionalButton);
         }
-        JButton createContainerButton = new JButton("Create Container");
-        createContainerButton.setForeground(Color.WHITE);
-        createContainerButton.setBackground(Color.DARK_GRAY);
-        createContainerButton.setPreferredSize(new Dimension(140, 30));
-        createContainerButton.addActionListener(e -> {
-            CreateContainerFrame createContainerFrame = new CreateContainerFrame();
-            createContainerFrame.setVisible(true);
-        });
+        JButton createContainerButton = getjButton();
 
         additionalButtonsPanel.add(leftPanel, BorderLayout.WEST);
         additionalButtonsPanel.add(createContainerButton, BorderLayout.EAST);
 
         return additionalButtonsPanel;
     }
+
+    private JButton getjButton(DockerMain d, String label) {
+        JButton additionalButton = new JButton(label);
+        additionalButton.setForeground(Color.WHITE);
+        additionalButton.setBackground(new Color(34, 49, 63));
+        additionalButton.setPreferredSize(new Dimension(120, 30));
+        additionalButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        additionalButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (label.equals("Measurements")) {
+                    DateIdFrame df = new DateIdFrame(d);
+                    df.setVisible(true);
+                } else {
+                    String apiEndpoint = "";
+                    List<String> list = new ArrayList<>();
+                    if (label.equals("All")) {
+                        list = api_request("ListContainers");
+                    }
+                    if (label.equals("Running")) {
+                        list = api_request("ListRunningContainers");
+                    }
+                    if (label.equals("Paused")) {
+                        list = api_request("ListPausedContainers");
+                    }
+
+                    displayListInFrame(list, "Cont");
+                }
+            }
+        });
+        return additionalButton;
     }
+
+    private static JButton getjButton() {
+        JButton createContainerButton = new JButton("Create Container");
+        createContainerButton.setForeground(Color.WHITE);
+        createContainerButton.setBackground(new Color(34, 49, 63));
+        createContainerButton.setPreferredSize(new Dimension(140, 30));
+        createContainerButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        createContainerButton.addActionListener(e -> {
+            CreateContainerFrame createContainerFrame = new CreateContainerFrame();
+            createContainerFrame.setVisible(true);
+        });
+        return createContainerButton;
+    }
+}
  class CreateContainerFrame extends JFrame {
     private JTextField containerNameField;
     private JTextField imageNameField;

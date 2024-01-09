@@ -1,4 +1,4 @@
-package bitbybit.docker;
+/*package bitbybit.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
@@ -59,3 +59,4 @@ public class ExecutorThreadNew implements Runnable {
         }
     }
 }
+*/

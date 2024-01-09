@@ -23,6 +23,7 @@ public class DockerInstance {
     public static List<Container> containers;
     public static List<ThreadPairs> executorthreads = new LinkedList<ThreadPairs>();
     public static List<ThreadPairs> monitorthreads = new LinkedList<ThreadPairs>();
+    //method do initialize all threads(not used)
     public static void initializeThreads(){
         for (Container container: listContainers()){
             executorthreads.add(new ThreadPairs(container.getId(), new ExecutorThread()));
@@ -31,6 +32,7 @@ public class DockerInstance {
             getMonThread(container.getId()).start();
         }
     }
+    //method to close threads(not used)
     public static void closeThreads(){
         for(ThreadPairs p: monitorthreads){
             p.getThread().interrupt();
@@ -40,19 +42,20 @@ public class DockerInstance {
         }
 
     }
+    //method to create container
     public static String createContainer(String containerName, String image)  {
-        dockerLock.lock();
+        dockerLock.lock(); // reentrant lock
         try {
             CreateContainerResponse container = dockerClient.createContainerCmd(image)
                     .withName(containerName)
                     .exec();
             containers = listContainers();
-            Logger.log("Container created successfully: " + container.getId());
             executorthreads.add(new ThreadPairs(container.getId(), new ExecutorThread()));
             monitorthreads.add(new ThreadPairs(container.getId(), new MonitorThread(container.getId())));
-            Objects.requireNonNull(getExecThread(container.getId())).start();
-            Objects.requireNonNull(getMonThread(container.getId())).start();
-            DatabaseHandler.add_container(container.getId(), containerName , image);
+            Objects.requireNonNull(getExecThread(container.getId())).start();// create exec thread
+            Objects.requireNonNull(getMonThread(container.getId())).start();//create mon thread
+            DatabaseHandler.add_container(container.getId(), containerName , image);//add container to db
+            Logger.log("Container created successfully: " + container.getId());//log result
             return container.getId();
         } catch (ConflictException e) {
             System.out.println("Container name already in use. Generating new name");
@@ -61,17 +64,18 @@ public class DockerInstance {
         } catch (Exception e) {
             Logger.log("Cannot create container"+ " " + e.getMessage());
         } finally {
-           dockerLock.unlock();
+           dockerLock.unlock();//reopen log
         }
         return null;
     }
+    //method to start container
     public static void startContainer(String containerId)  {
        try {
            if (isContainerRunning(containerId)) {
               throw new ContainerAlreadyRunningException("Container is already running with ID: " + containerId);
             }
             dockerClient.startContainerCmd(containerId).exec();
-           Logger.log("Container Started successfully: "+ containerId);
+           Logger.log("Container Started successfully: "+ containerId);//log result
         }catch (NotFoundException e) {
            Logger.log("Container not found with ID: " + containerId + " " + e.getMessage());
        } catch (ContainerAlreadyRunningException e){
@@ -80,6 +84,7 @@ public class DockerInstance {
            Logger.log("Error starting container with ID: " + containerId+ " " + e.getMessage());
         }
     }
+    //execute command in container
     public static String executeCommandInContainer(String containerId, String[] command)  {
         try {
             if (!isContainerRunning(containerId)) {
@@ -92,7 +97,7 @@ public class DockerInstance {
                     .exec();
             String execId = execCreateCmdResponse.getId();
             StringBuilder commandOutput = new StringBuilder();
-            CountDownLatch commandCompleted = new CountDownLatch(1);
+            CountDownLatch commandCompleted = new CountDownLatch(1);//ensure method will return when command is finished
             ResultCallback<Frame> callback = new ResultCallback<Frame>() {
                 @Override
                 public void onStart(Closeable closeable) {
@@ -102,7 +107,7 @@ public class DockerInstance {
                 @Override
                 public void onNext(Frame item) {
                     String output = new String(item.getPayload());
-                    commandOutput.append(output);
+                    commandOutput.append(output);//append result
                 }
 
                 @Override
@@ -119,7 +124,7 @@ public class DockerInstance {
 
                 @Override
                 public void close() {
-                    // Close any resources when the command execution is finished (optional)
+
                 }
             };
 
@@ -135,24 +140,24 @@ public class DockerInstance {
         }
         return null;
     }
+    //stop container method
     public static void stopContainer(String containerId)  {
         try {
             if (!isContainerRunning(containerId)) {
                 throw  new ContainerNotRunningException("Container is not running");
             }
-            Logger.log("Container stopped successfully: " + containerId);
             StopContainerCmd stopContainerCmd = dockerClient.stopContainerCmd(containerId);
             stopContainerCmd.exec();
-
+            Logger.log("Container stopped successfully: " + containerId);// log result
         }catch(ContainerNotRunningException e) {
             Logger.log("Container is not running"+ " " + e.getMessage());
-            e.printStackTrace();
         }catch (NotFoundException e) {
             Logger.log("Container not found with ID: " + containerId+ " " + e.getMessage());
         } catch (Exception e) {
             Logger.log("Cannot stop container"+ " " + e.getMessage());
         }
     }
+    //method to kill container(not used)
     public static void killContainer(String containerId) {
         dockerLock.lock();
         try {
@@ -172,6 +177,7 @@ public class DockerInstance {
             dockerLock.unlock();
         }
     }
+    //method to return exec thread
     public static ExecutorThread getExecThread(String containerid){
         try{
             for(ThreadPairs t: executorthreads){
@@ -185,6 +191,7 @@ public class DockerInstance {
         }
         return null;
     }
+    //method to return mon thread
     public static MonitorThread getMonThread(String containerid){
         try{
             for(ThreadPairs t: monitorthreads){
@@ -197,13 +204,14 @@ public class DockerInstance {
         }
         return null;
     }
+    //method to pause container
     public static void pauseContainer(String containerId)  {
         try {
             if (!isContainerRunning(containerId)) {
                 throw  new ContainerNotRunningException("Container is not running");
             }
             dockerClient.pauseContainerCmd(containerId).exec();
-            Logger.log("Container paused successfully: " + containerId);
+            Logger.log("Container paused successfully: " + containerId);//log result
         }catch (ContainerNotRunningException e){
             Logger.log("Container is not running"+ " " + e.getMessage());
         }catch (NotFoundException e) {
@@ -212,13 +220,14 @@ public class DockerInstance {
             Logger.log("Cannot pause container"+ containerId+ " " + e.getMessage());
         }
     }
+    //unpause container
     public static void unpauseContainer(String containerId) {
         try {
             if (!isContainerRunning(containerId)) {
                 throw  new ContainerNotRunningException("Container is not running");
             }
             dockerClient.unpauseContainerCmd(containerId).exec();
-            Logger.log("Unpaused container " + containerId);
+            Logger.log("Unpaused container " + containerId);//log result
         } catch (ContainerNotRunningException e){
             Logger.log("Container is running. Cannot unpause it"+ " " + e.getMessage());
         }catch (NotFoundException e) {
@@ -229,6 +238,7 @@ public class DockerInstance {
             Logger.log("Error unpausing container with ID: " + containerId+ " " + e.getMessage());
         }
     }
+    //restart container
     public static void restartContainer(String containerId)  {
         try {
             dockerClient.restartContainerCmd(containerId).exec();
@@ -239,6 +249,7 @@ public class DockerInstance {
             Logger.log("Error restarting container: " + containerId+ " " + e.getMessage());
         }
     }
+    //remove container
     public static void removeContainer(String containerId) {
         try {
             if (!containerExists(containerId)) {
@@ -257,6 +268,7 @@ public class DockerInstance {
             Logger.log("Error removing container with ID: " + containerId+ " " + e.getMessage());
         }
     }
+    //return Container object
     public static Container getContainer(String containerId) {
         try {
             List<Container> containers = dockerClient.listContainersCmd().exec();
@@ -273,6 +285,7 @@ public class DockerInstance {
         }
         return null;
     }
+    //get logs
     public static StringBuilder getContainerLogs(String containerId)  {
         try {
             if (!isContainerRunning(containerId)) {
@@ -286,7 +299,7 @@ public class DockerInstance {
                     .withFollowStream(true)
                     .withTailAll();
 
-            StringBuilder logs = new StringBuilder();
+            StringBuilder logs = new StringBuilder();//get log results
             CountDownLatch latch = new CountDownLatch(1);
             logContainerCmd.exec(new ResultCallback<Frame>() {
                 @Override
@@ -295,7 +308,7 @@ public class DockerInstance {
 
                 @Override
                 public void onNext(Frame item) {
-                    logs.append(new String(item.getPayload())+"\n");
+                    logs.append(new String(item.getPayload())+"\n");//append to string builder
                 }
 
                 @Override
@@ -314,7 +327,7 @@ public class DockerInstance {
                 }
             });
         try {
-            latch.await(30, TimeUnit.SECONDS);
+            latch.await(30, TimeUnit.SECONDS);// wait for logs to be collected
         } catch (InterruptedException e) {
             Logger.log("Interrupted while waiting for log collection " + e.getMessage());
         }
@@ -360,6 +373,7 @@ public class DockerInstance {
 
         return null;
     }
+    //method to list containers
     public static List<Container> listContainers()  {
         try {
             ListContainersCmd listContainersCmd = dockerClient.listContainersCmd()
@@ -370,28 +384,26 @@ public class DockerInstance {
         }
         return null;
     }
+    //get disk volumes
     public static List<InspectVolumeResponse> displayDiskVolumes()    {
         try {
         ListVolumesResponse listVolumesResponse = dockerClient.listVolumesCmd().exec();
         List<InspectVolumeResponse> volumes = listVolumesResponse.getVolumes();
         return volumes;
-
     } catch (Exception e) {
-            Logger.log("Error displaying disk volumes: " + e.getMessage());
+            Logger.log("Error displaying disk volumes: " + e.getMessage());//log error
     }
         return null;
     }
+    //get container volume mounts
     public static  String getVolumeMounts(String containerId) {
         try {
             List<Container> containers = dockerClient.listContainersCmd().exec();
-
             for (Container container : containers) {
                 if (container.getId().equals(containerId)) {
                    List<ContainerMount> cm =  container.getMounts();
-
                     return cm.toString();
                 }
-
             }
 
         } catch (Exception e) {
@@ -400,7 +412,7 @@ public class DockerInstance {
 
         return null;
     }
-
+    //get networks
     public static List<Network> displaySubnets() {
         try {
         List<Network> networks = dockerClient.listNetworksCmd().exec();
@@ -410,7 +422,7 @@ public class DockerInstance {
     }
         return null;
     }
-
+    //running containers
     public static List<Container> listrunningContainer(){
         try {
             ListContainersCmd listContainersCmd = dockerClient.listContainersCmd()
@@ -421,6 +433,7 @@ public class DockerInstance {
         }
         return null;
     }
+    //paused containers
     public static List<Container> listpausedContainer(){
         try {
             ListContainersCmd listContainersCmd = dockerClient.listContainersCmd()
@@ -431,6 +444,7 @@ public class DockerInstance {
         }
         return null;
     }
+    //generate unique name if the container name already existsw
     private static String generateUniqueContainerName(String Name) {
         try {
             int i = 1;
@@ -445,7 +459,7 @@ public class DockerInstance {
         }
          return null;
     }
-
+    //check if the name exists
     public static boolean containerNameExists(String Name) {
         List<Container> containers = listContainers();
         return containers.stream().anyMatch(container -> Arrays.asList(container.getNames()).contains("/" + Name));
@@ -479,12 +493,11 @@ public class DockerInstance {
     }
     private static class ContainerAlreadyRunningException extends Exception {
         public ContainerAlreadyRunningException(String message) {
-            //System.err.println("Container already running");
         }
     }
     private static class ContainerNotRunningException extends Exception {
         public ContainerNotRunningException(String message) {
-            //System.err.println("Container is not running");
+
         }
     }
 
@@ -493,6 +506,8 @@ public class DockerInstance {
                         ("tcp://localhost:2375")
                 .build();
     }
+
+    //used to connect threads to the corresponding containers
     public static class ThreadPairs{
         private String containerid;
         private Thread thread;
