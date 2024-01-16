@@ -40,6 +40,9 @@ public class DockerController {
             } else {
                 DockerInstance.executorthreads.add(new DockerInstance.ThreadPairs(containerid, new ExecutorThread()));
                 DockerInstance.monitorthreads.add(new DockerInstance.ThreadPairs(containerid, new MonitorThread(containerid)));
+                Container c = DockerInstance.getContainer(containerid);
+                assert c != null;
+                DatabaseHandler.add_container(containerid,containerName,c.getImage());
                 Objects.requireNonNull(DockerInstance.getExecThread(containerid)).start();
                 Objects.requireNonNull(DockerInstance.getMonThread(containerid)).start();
                 Objects.requireNonNull(DockerInstance.getExecThread(containerid)).addTask(new ExecutorThread.StartContainerTask(containerid, millis));
@@ -56,6 +59,9 @@ public class DockerController {
         } else {
             DockerInstance.executorthreads.add(new DockerInstance.ThreadPairs(containerid,new ExecutorThread()));
             DockerInstance.monitorthreads.add(new DockerInstance.ThreadPairs(containerid,new MonitorThread(containerid)));
+            Container c = DockerInstance.getContainer(containerid);
+            assert c != null;
+            DatabaseHandler.add_container(containerid,containerName,c.getImage());
             Objects.requireNonNull(DockerInstance.getExecThread(containerid)).start();
             Objects.requireNonNull(DockerInstance.getMonThread(containerid)).start();
             DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StopContainerTask(containerid));
@@ -71,6 +77,9 @@ public class DockerController {
         } else {
             DockerInstance.executorthreads.add(new DockerInstance.ThreadPairs(containerid,new ExecutorThread()));
             DockerInstance.monitorthreads.add(new DockerInstance.ThreadPairs(containerid,new MonitorThread(containerid)));
+            Container c = DockerInstance.getContainer(containerid);
+            assert c != null;
+            DatabaseHandler.add_container(containerid,containerName,c.getImage());
             Objects.requireNonNull(DockerInstance.getExecThread(containerid)).start();
             Objects.requireNonNull(DockerInstance.getMonThread(containerid)).start();
             DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.PauseContainerTask(containerid, millis));
@@ -85,6 +94,9 @@ public class DockerController {
         } else {
             DockerInstance.executorthreads.add(new DockerInstance.ThreadPairs(containerid,new ExecutorThread()));
             DockerInstance.monitorthreads.add(new DockerInstance.ThreadPairs(containerid,new MonitorThread(containerid)));
+            Container c = DockerInstance.getContainer(containerid);
+            assert c != null;
+            DatabaseHandler.add_container(containerid,containerName,c.getImage());
             Objects.requireNonNull(DockerInstance.getExecThread(containerid)).start();
             Objects.requireNonNull(DockerInstance.getMonThread(containerid)).start();
             DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.UnpauseContainerTask(containerid));
@@ -109,6 +121,9 @@ public class DockerController {
         } else {
             DockerInstance.executorthreads.add(new DockerInstance.ThreadPairs(containerid,new ExecutorThread()));
             DockerInstance.monitorthreads.add(new DockerInstance.ThreadPairs(containerid,new MonitorThread(containerid)));
+            Container c = DockerInstance.getContainer(containerid);
+            assert c != null;
+            DatabaseHandler.add_container(containerid,containerName,c.getImage());
             Objects.requireNonNull(DockerInstance.getExecThread(containerid)).start();
             Objects.requireNonNull(DockerInstance.getMonThread(containerid)).start();
             DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.RemoveContainerTask(containerid));
@@ -125,6 +140,9 @@ public class DockerController {
             } else {
                 DockerInstance.executorthreads.add(new DockerInstance.ThreadPairs(containerid, new ExecutorThread()));
                 DockerInstance.monitorthreads.add(new DockerInstance.ThreadPairs(containerid, new MonitorThread(containerid)));
+                Container c = DockerInstance.getContainer(containerid);
+                assert c != null;
+                DatabaseHandler.add_container(containerid,containerName,c.getImage());
                 Objects.requireNonNull(DockerInstance.getExecThread(containerid)).start();
                 Objects.requireNonNull(DockerInstance.getMonThread(containerid)).start();
                 DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.RestartContainerTask(containerid, millis));

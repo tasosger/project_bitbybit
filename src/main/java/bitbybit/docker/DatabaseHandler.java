@@ -1,6 +1,8 @@
 package bitbybit.docker;
 
 import com.github.dockerjava.api.exception.NotFoundException;
+import com.github.dockerjava.api.model.Container;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,6 +10,7 @@ import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class DatabaseHandler {
@@ -15,10 +18,10 @@ public class DatabaseHandler {
     public static Queue<MonitorThread.ContainerMetrics> metrics = new LinkedList<>() {
     };
 
-    // Path to the embedded database file in resources
+    /* Path to the embedded database file in resources*/
     private static String dbPath = "src/main/resources/" + dbName;
 
-    // SQLite database URL for the embedded database
+    /* SQLite database URL for the embedded database*/
     private static String url = "jdbc:sqlite:" + dbPath;
 
     public static void form_connection() {
@@ -74,6 +77,7 @@ public class DatabaseHandler {
         statement.executeUpdate(createMetricsTableQuery);
     }
 
+    /*add container metrics to db*/
     public static void add_metrics(MonitorThread.ContainerMetrics c) {
         try {
             Class.forName("org.sqlite.JDBC");
@@ -94,6 +98,9 @@ public class DatabaseHandler {
         }
     }
 
+
+    /*add a container to the database*/
+
     public static void add_container(String id, String name, String image) {
         try {
             Class.forName("org.sqlite.JDBC");
@@ -110,14 +117,17 @@ public class DatabaseHandler {
 
 
         } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            }
+
 
     }
+    /*add metric to mon thread list*/
 
     public static void addm(MonitorThread.ContainerMetrics c) {
         metrics.add(c);
     }
+
+    /*Get queries*/
 
     public static String  getmeasurement(String d) {
         try (Connection connection = DriverManager.getConnection(url)) {
@@ -133,7 +143,7 @@ public class DatabaseHandler {
                     StringBuilder resultStringBuilder = new StringBuilder();
                     try {
 
-                        resultStringBuilder.append("Metric ID Container Name Timestamp CPU Usage Memory Usage Network Rx Network Tx\n");
+                        resultStringBuilder.append("Metric ID   Container Name   Timestamp   CPU Usage   Memory Usage   Network Rx   Network Tx\n");
 
                         // Iterate over the result set and append values to the StringBuilder
                         while (resultSet.next()) {
@@ -150,9 +160,9 @@ public class DatabaseHandler {
                             String formattedTimestamp = dateFormat2.format(timestamp);
 
                             // Append values to the StringBuilder
-                            resultStringBuilder.append(metricId).append("\t").append(containerId).append("\t")
-                                    .append(formattedTimestamp).append(" \t").append(cpuUsage).append("\t")
-                                    .append(memoryUsage).append("\t").append(networkRx).append("\t").append(networkTx)
+                            resultStringBuilder.append(metricId).append("              ").append(containerId).append("                 ")
+                                    .append(formattedTimestamp).append("        ").append(cpuUsage).append("              ")
+                                    .append(memoryUsage).append("                     ").append(networkRx).append("     ").append(networkTx)
                                     .append("\n");
 
                         }
@@ -185,8 +195,7 @@ public class DatabaseHandler {
                     StringBuilder resultStringBuilder = new StringBuilder();
                     try {
 
-                        resultStringBuilder.append("Metric ID  Container Name  Timestamp  "
-                                +"CPU Usage  Memory Usage  Network Rx  Network Tx\n");
+                        resultStringBuilder.append("Metric ID   Container Name   Timestamp   CPU Usage   Memory Usage   Network Rx   Network Tx\n");
 
                         // Iterate over the result set and append values to the StringBuilder
                         while (resultSet.next()) {
@@ -240,7 +249,7 @@ public class DatabaseHandler {
                     StringBuilder resultStringBuilder = new StringBuilder();
                     try {
 
-                        resultStringBuilder.append("Metric ID\tContainer Name\tTimestamp\tCPU Usage\tMemory Usage\tNetwork Rx\tNetwork Tx\n");
+                        resultStringBuilder.append("Metric ID   Container Name   Timestamp   CPU Usage   Memory Usage   Network Rx   Network Tx\n");
 
                         // Iterate over the result set and append values to the StringBuilder
                         while (resultSet.next()) {
@@ -257,7 +266,7 @@ public class DatabaseHandler {
                             String formattedTimestamp = dateFormat2.format(timestamp);
 
                             // Append values to the StringBuilder
-                            resultStringBuilder.append(metricId).append("    \t").append(containerId).append("    \t")
+                            resultStringBuilder.append(metricId+"\t").append(containerId).append("    \t")
                                     .append(formattedTimestamp).append("    \t").append(cpuUsage).append("    \t")
                                     .append(memoryUsage).append("    \t").append(networkRx).append("    \t").append(networkTx)
                                     .append("\n");

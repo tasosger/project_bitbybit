@@ -20,10 +20,10 @@ import com.github.dockerjava.core.DockerClientBuilder;
 public class DockerInstance {
     private static final DockerClient dockerClient = initializeDockerClient();
     private static final ReentrantLock dockerLock = new ReentrantLock();
-    public static List<Container> containers;
-    public static List<ThreadPairs> executorthreads = new LinkedList<ThreadPairs>();
-    public static List<ThreadPairs> monitorthreads = new LinkedList<ThreadPairs>();
-    //method do initialize all threads(not used)
+    public static List<Container> containers;//list that includes containers
+    public static List<ThreadPairs> executorthreads = new LinkedList<ThreadPairs>();//list to connect container ids with exec threads
+    public static List<ThreadPairs> monitorthreads = new LinkedList<ThreadPairs>();//list to connect container ids with mon threads
+    //method do initialize all container threads(not used)
     public static void initializeThreads(){
         for (Container container: listContainers()){
             executorthreads.add(new ThreadPairs(container.getId(), new ExecutorThread()));
@@ -42,7 +42,7 @@ public class DockerInstance {
         }
 
     }
-    //method to create container
+    //method to create container, uses containername exception
     public static String createContainer(String containerName, String image)  {
         dockerLock.lock(); // reentrant lock
         try {
@@ -84,7 +84,7 @@ public class DockerInstance {
            Logger.log("Error starting container with ID: " + containerId+ " " + e.getMessage());
         }
     }
-    //execute command in container
+    //execute command in container using a result callback, execute example ls
     public static String executeCommandInContainer(String containerId, String[] command)  {
         try {
             if (!isContainerRunning(containerId)) {
@@ -177,7 +177,7 @@ public class DockerInstance {
             dockerLock.unlock();
         }
     }
-    //method to return exec thread
+    //method to return exec thread from executor thread list
     public static ExecutorThread getExecThread(String containerid){
         try{
             for(ThreadPairs t: executorthreads){
@@ -191,7 +191,7 @@ public class DockerInstance {
         }
         return null;
     }
-    //method to return mon thread
+    //method to return mon thread from monitor thread list
     public static MonitorThread getMonThread(String containerid){
         try{
             for(ThreadPairs t: monitorthreads){
@@ -249,7 +249,7 @@ public class DockerInstance {
             Logger.log("Error restarting container: " + containerId+ " " + e.getMessage());
         }
     }
-    //remove container
+    //remove container, interrupt threads
     public static void removeContainer(String containerId) {
         try {
             if (!containerExists(containerId)) {
@@ -268,10 +268,10 @@ public class DockerInstance {
             Logger.log("Error removing container with ID: " + containerId+ " " + e.getMessage());
         }
     }
-    //return Container object
+    //return docker.api Container object(not used)
     public static Container getContainer(String containerId) {
         try {
-            List<Container> containers = dockerClient.listContainersCmd().exec();
+            List<Container> containers = listContainers();
             for (Container container : containers) {
                 if (container.getId().equals(containerId)) {
                     return container;
@@ -285,7 +285,7 @@ public class DockerInstance {
         }
         return null;
     }
-    //get logs
+    //get Container logs
     public static StringBuilder getContainerLogs(String containerId)  {
         try {
             if (!isContainerRunning(containerId)) {
@@ -341,6 +341,8 @@ public class DockerInstance {
         }
         return null;
     }
+
+    //return id from container name
     public static String getContainerIdByName(String containerName) {
         try {
             containers = listContainers();
@@ -373,7 +375,7 @@ public class DockerInstance {
 
         return null;
     }
-    //method to list containers
+    //method to list containers, retutns list<containers>
     public static List<Container> listContainers()  {
         try {
             ListContainersCmd listContainersCmd = dockerClient.listContainersCmd()
@@ -444,7 +446,7 @@ public class DockerInstance {
         }
         return null;
     }
-    //generate unique name if the container name already existsw
+    //generate unique name if the container name already exists
     private static String generateUniqueContainerName(String Name) {
         try {
             int i = 1;
