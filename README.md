@@ -16,7 +16,7 @@
  &emsp;	-You can query the database on a specific date, a specific container, or on both\
  &emsp;	-If you do not wish to specify a field leave it empty\
  &emsp;	-To create a container press the create container button and insert container name and image name\
- &emps; -To use the command execution select the container press the EXECUTE COMMAND option, enter the command (eg ls) and press execute\
+ &emsp; -To use the command execution select the container press the EXECUTE COMMAND option, enter the command (eg ls) and press execute\
  &enps; -To Execute image actions go to the images tab\
  &emsp; -Here you can view a list of the pulled images\
  &emsp; -By clicking on an image you can remove it or see information about it\
