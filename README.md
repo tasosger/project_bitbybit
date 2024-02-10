@@ -23,12 +23,12 @@
  &emsp; -Press the pull image button to pull an image and enter the name of the image you want to pull\
  &ensp; -To view Subnets or Volumes click the respective tabs\
 4. Directory contents:
-   &ensp;-Here are the pom.xml, checkstyle.xml files and the readme file
-   &ensp;-In the src/main folder:
-   &emsp;-In the java folder are the source and test codes
-   &emsp;-In the resource folder is the db file(if created)
-   &ensp;-In the target folder:
-   &emsp;-Here is the jar file for the app
+   &ensp;-Here are the pom.xml, checkstyle.xml files and the readme file\
+   &ensp;-In the src/main folder:\
+   &emsp;-In the java folder are the source and test codes\
+   &emsp;-In the resource folder is the db file(if created)\
+   &ensp;-In the target folder:\
+   &emsp;-Here is the jar file for the app\
 5. 
      
 
