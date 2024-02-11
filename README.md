@@ -29,6 +29,7 @@
    &emsp;-In the resource folder is the db file(if created)\
    &ensp;-In the target folder:\
    &emsp;-Here is the jar file for the app
-5. 
+5. UML
+   ![Alt Text](uml.png)
      
 
