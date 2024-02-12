@@ -53,7 +53,11 @@ public class DatabaseHandler {
         if (!databaseFile.exists()) {
             try {
                 // Create the directory structure if it doesn't exist
-                databaseFile.getParentFile().mkdirs();
+                if (!databaseFile.getParentFile().exists()) {
+                    if (!databaseFile.getParentFile().mkdirs()) {
+                        throw new IOException("Failed to create directory structure for the database file.");
+                    }
+                }
 
                 // Create a new empty file
                 if (databaseFile.createNewFile()) {
@@ -66,13 +70,17 @@ public class DatabaseHandler {
                 throw new IOException("Error creating database file.", e);
             }
         }
+
+        // Establish connection to the database
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + filePath)) {
+            // Execute SQL statements if needed
             try (Statement statement = connection.createStatement()) {
-                //createTables(statement);
+                // Execute SQL statements to create tables, if necessary
+                // createTables(statement);
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            throw new IOException("Error creating database file.", e);
+            throw new IOException("Error connecting to or manipulating database file.", e);
         }
     }
 
