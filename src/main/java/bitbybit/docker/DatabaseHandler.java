@@ -3,6 +3,7 @@ package bitbybit.docker;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,9 +29,8 @@ public class DatabaseHandler {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            if (!Files.exists(Path.of(dbPath))) {
                 createDatabaseFile(dbPath);
-            }
+
             try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
                 try (Statement statement = connection.createStatement()) {
                     createTables(statement);
@@ -47,6 +47,25 @@ public class DatabaseHandler {
     }
 
     private static void createDatabaseFile(String filePath) throws IOException {
+        File databaseFile = new File(filePath);
+
+        // Check if the file already exists or create a new file
+        if (!databaseFile.exists()) {
+            try {
+                // Create the directory structure if it doesn't exist
+                databaseFile.getParentFile().mkdirs();
+
+                // Create a new empty file
+                if (databaseFile.createNewFile()) {
+                    System.out.println("Database file created: " + filePath);
+                } else {
+                    throw new IOException("Failed to create database file.");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new IOException("Error creating database file.", e);
+            }
+        }
         try (Connection connection = DriverManager.getConnection("jdbc:sqlite:" + filePath)) {
             try (Statement statement = connection.createStatement()) {
                 //createTables(statement);

@@ -7,22 +7,22 @@ import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.SearchItem;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.command.PullImageResultCallback;
-
-import java.util.*;
+//import java.util.*;
+import java.util.List;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import com.github.dockerjava.api.command.InspectImageResponse;
-
-
 import java.io.IOException;
 
 public class DockerImage {
     private static final DockerClient dockerClient= initializeDockerClient();
     public static List<Image> images;
+    public static final long TIMEOUTE = 60;
     public static void pullImage(String imageName) {
         try {
             dockerClient.pullImageCmd(imageName)
                     .exec(new PullImageResultCallback())
-                    .awaitCompletion(30, TimeUnit.SECONDS);
+                    .awaitCompletion(TIMEOUTE, TimeUnit.SECONDS);
             images = listImages();
             Logger.log("Image pulled successfully: " + imageName);
         } catch (InterruptedException e) {
@@ -38,7 +38,7 @@ public class DockerImage {
             dockerClient.pullImageCmd(imageName)
                     .withTag(tag)
                     .exec(new PullImageResultCallback())
-                    .awaitCompletion(30, TimeUnit.SECONDS);
+                    .awaitCompletion(TIMEOUTE, TimeUnit.SECONDS);
             images = listImages();
             Logger.log("Image pulled successfully: " + imageName);
         } catch (InterruptedException e) {
@@ -84,7 +84,7 @@ public class DockerImage {
         try {
             for (Image image : images) {
                 if (image.getId().equals(imageId)) {
-                    return image.getRepoTags()[0]; // Assuming the first tag is the primary tag
+                    return image.getRepoTags()[0]; //first tag is the primary tag
                 }
             }
             throw new NotFoundException("Image not found with ID: " + imageId);
@@ -171,8 +171,7 @@ public class DockerImage {
     }
 
     private static DockerClient initializeDockerClient() {
-        return DockerClientBuilder.getInstance
-                        ("tcp://localhost:2375")
+        return DockerClientBuilder.getInstance("tcp://localhost:2375")
                 .build();
     }
 

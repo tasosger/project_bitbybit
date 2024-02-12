@@ -28,6 +28,7 @@ public class MonitorThread extends Thread {
     private final long startTime;
     public static  ArrayList<ContainerMetrics> metricsList = new ArrayList<>();
     private final Map<String, Object> containerMetrics;
+    private static final int MEASTIME = 5000;
 
     public MonitorThread(String containerid) {
         this.containerMetrics = new HashMap<>();
@@ -44,7 +45,7 @@ public class MonitorThread extends Thread {
                     dockerLock.lock();
                     collectAndPersistMetrics();
                     dockerLock.unlock();
-                    Thread.sleep(5000);
+                    Thread.sleep(MEASTIME);
                 }
             }
 

@@ -20,7 +20,7 @@
         <module name="CustomImportOrder" />
 
         <!-- Miscellaneous -->
-        <module name="MagicNumber" />
+
         <module name="NoWhitespaceAfter" />
     </module>
 </module>

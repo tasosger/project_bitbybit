@@ -2,7 +2,6 @@ package bitbybit.docker;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.Container;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;

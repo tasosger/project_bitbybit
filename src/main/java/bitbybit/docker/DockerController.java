@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
-
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -25,13 +24,13 @@ import java.util.Objects;
 public class DockerController {
 
     @RequestMapping(value = "/CreateContainer", method = {RequestMethod.GET, RequestMethod.POST})
-     public String container_creation(@RequestParam(name = "containerName") String containerName,
+     public String containerCreation(@RequestParam(name = "containerName") String containerName,
                                       @RequestParam(name = "imageName") String imageName){
         String containerid = DockerInstance.createContainer(containerName,imageName);
         return "container created with id "+containerid;
     }
     @RequestMapping(value = "/StartContainer", method = {RequestMethod.GET, RequestMethod.POST})
-    public String container_start(@RequestParam(name = "containerName") String containerName,
+    public String containerStart(@RequestParam(name = "containerName") String containerName,
                                      @RequestParam(name= "millis") int millis){
         String containerid = DockerInstance.getContainerIdByName(containerName);
 
@@ -52,7 +51,7 @@ public class DockerController {
 
     }
     @RequestMapping(value = "/StopContainer", method = {RequestMethod.GET, RequestMethod.POST})
-    public String container_stop(@RequestParam(name = "containerName") String containerName){
+    public String containerStop(@RequestParam(name = "containerName") String containerName){
         String containerid = DockerInstance.getContainerIdByName(containerName);
         if(DockerInstance.getExecThread(containerid)!=null) {
             DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.StopContainerTask(containerid));
@@ -69,7 +68,7 @@ public class DockerController {
         return containerid;
     }
     @RequestMapping(value = "/PauseContainer", method = {RequestMethod.GET, RequestMethod.POST})
-    public String container_pause(@RequestParam(name = "containerName") String containerName,
+    public String containerPause(@RequestParam(name = "containerName") String containerName,
                                   @RequestParam(name = "millis") int millis){
         String containerid = DockerInstance.getContainerIdByName(containerName);
         if (DockerInstance.getExecThread(containerid)!=null) {
@@ -87,7 +86,7 @@ public class DockerController {
         return containerid;
     }
     @RequestMapping(value = "/UnpauseContainer", method = {RequestMethod.GET, RequestMethod.POST})
-    public String container_unpause(@RequestParam(name = "containerName") String containerName){
+    public String containerUnpause(@RequestParam(name = "containerName") String containerName){
         String containerid = DockerInstance.getContainerIdByName(containerName);
         if(DockerInstance.getExecThread(containerid)!=null) {
             DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.UnpauseContainerTask(containerid));
@@ -104,7 +103,7 @@ public class DockerController {
         return containerid;
     }
     @RequestMapping(value = "/ExecCommandContainer", method = {RequestMethod.GET, RequestMethod.POST})
-    public String container_command(@RequestParam(name = "containerName") String containerName,
+    public String containerCommand(@RequestParam(name = "containerName") String containerName,
                                     @RequestParam(name = "command") String command){
         String containerid = DockerInstance.getContainerIdByName(containerName);
         String[] command1 = command.split("\\s+");
@@ -114,7 +113,7 @@ public class DockerController {
         return res;
     }
     @RequestMapping(value = "/RemoveContainer", method = {RequestMethod.GET, RequestMethod.POST})
-    public String container_remove(@RequestParam(name = "containerName") String containerName){
+    public String containerRemove(@RequestParam(name = "containerName") String containerName){
         String containerid = DockerInstance.getContainerIdByName(containerName);
         if(DockerInstance.getExecThread(containerid)!=null) {
             DockerInstance.getExecThread(containerid).addTask(new ExecutorThread.RemoveContainerTask(containerid));
@@ -131,7 +130,7 @@ public class DockerController {
         return containerid;
     }
     @RequestMapping(value = "/RestartContainer", method = {RequestMethod.GET, RequestMethod.POST})
-    public String container_restart(@RequestParam(name = "containerName") String containerName,
+    public String containerRestart(@RequestParam(name = "containerName") String containerName,
                                   @RequestParam(name = "millis") int millis){
         String containerid = DockerInstance.getContainerIdByName(containerName);
 
@@ -151,13 +150,13 @@ public class DockerController {
         return containerid;
     }
     @RequestMapping(value = "/ContainerLogs", method = {RequestMethod.GET, RequestMethod.POST})
-    public String container_logs(@RequestParam(name = "containerName") String containerName){
+    public String containerLogs(@RequestParam(name = "containerName") String containerName){
         String containerid = DockerInstance.getContainerIdByName(containerName);
         StringBuilder logs = DockerInstance.getContainerLogs(containerid);
         return logs.toString();
     }
     @RequestMapping(value = "/ListContainers", method = {RequestMethod.GET, RequestMethod.POST})
-    public String list_container(){
+    public String listContainer(){
         try {
             List<Container> l = DockerInstance.listContainers();
             StringBuilder s = new StringBuilder();
@@ -172,7 +171,7 @@ public class DockerController {
         }
     }
     @RequestMapping(value = "/ListRunningContainers", method = {RequestMethod.GET, RequestMethod.POST})
-    public String list_runcontainer(){
+    public String listRuncontainer(){
         List<Container> l = DockerInstance.listrunningContainer();
         StringBuilder s = new StringBuilder();
         for (Container c : l) {
@@ -182,7 +181,7 @@ public class DockerController {
         return s.toString();
     }
     @RequestMapping(value = "/ListPausedContainers", method = {RequestMethod.GET, RequestMethod.POST})
-    public String list_pausedcontainer(){
+    public String listPausedcontainer(){
         List<Container> l = DockerInstance.listpausedContainer();
         StringBuilder s = new StringBuilder();
         for (Container c : l) {
@@ -192,7 +191,7 @@ public class DockerController {
         return s.toString();
     }
     @RequestMapping(value = "/GetVolumeMounts", method = {RequestMethod.GET, RequestMethod.POST})
-    public String volume_mounts(@RequestParam(name = "containerName") String containerName){
+    public String volumeMounts(@RequestParam(name = "containerName") String containerName){
         String containerid = DockerInstance.getContainerIdByName(containerName);
         return   DockerInstance.getVolumeMounts(containerid);
     }
@@ -200,17 +199,17 @@ public class DockerController {
 
 
     @RequestMapping(value = "/PullImage", method = {RequestMethod.GET, RequestMethod.POST})
-    public void pull_image(@RequestParam(name ="imageName") String imageName){
+    public void pullImage(@RequestParam(name ="imageName") String imageName){
         DockerImage.pullImage(imageName);
     }
     @RequestMapping(value = "/RemoveImage", method = {RequestMethod.GET, RequestMethod.POST})
-    public void remove_image(@RequestParam(name="imageName") String imageName){
+    public void removeImage(@RequestParam(name="imageName") String imageName){
         String imageid = DockerImage.getImageIdByName(imageName);
         DockerImage.removeImage(imageid);
     }
 
     @RequestMapping(value = "/ListImages", method = {RequestMethod.GET, RequestMethod.POST})
-    public String list_images(){
+    public String listImages(){
         List<Image> e = DockerImage.listImages();
         StringBuilder s = new StringBuilder();
         for (Image i : e) {
@@ -224,7 +223,7 @@ public class DockerController {
         return s.toString();
     }
     @RequestMapping(value = "/ImageResp", method = {RequestMethod.GET,RequestMethod.POST})
-    public String image_resp(@RequestParam(name = "imageName") String image){
+    public String imageResp(@RequestParam(name = "imageName") String image){
         String imageid = DockerImage.getImageIdByName(image);
         InspectImageResponse resp = DockerImage.inspectImage(imageid);
         StringBuilder s = new StringBuilder();
