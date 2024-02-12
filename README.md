@@ -41,5 +41,6 @@
    &emsp;-A map and an Array List are used to store the metrics in the database one by one.\
    &emsp;-A "ContainerMetrics" Class is used to handle the container metrics\
    &emsp;-A class called Thread pairs is used to connect each container with the respective thread.\
+   &ensp; The main application communicates with the Threads from a REST API, implemented in the DockerController Class
      
 
