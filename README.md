@@ -31,5 +31,15 @@
    &emsp;-Here is the jar file for the app
 5. UML
    ![Alt Text](uml.png)
+6. Algorithms:
+   &ensp; This app uses an Executor Thread to execute container actions and a Monitor Thread to monitor container Statistics.\
+   &ensp; Executor Thread:\
+   &emsp:-Here an interface with the name "Container Tasks" is used to handle the different types of container tasks.\
+   &emsp:-A List is used to execute the tasks for each container one by one.\
+   &emsp:-A class called Thread pairs is used to connect each container with the respective thread.\
+   &ensp:Monitor Thread\
+   &emsp:-A map and an Array List are used to store the metrics in the database one by one.\
+   &emsp:-A "ContainerMetrics" Class is used to handle the container metrics\
+   &emsp:-A class called Thread pairs is used to connect each container with the respective thread.\
      
 
